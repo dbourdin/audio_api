@@ -1,0 +1,32 @@
+[flake8]
+exclude =
+    .git,
+    __pycache__,
+    .pytest_cache,
+    env,
+    alembic,
+
+max-line-length = 88
+
+; D106: Missing docstring in public nested class
+; B008: Do not perform function calls in argument defaults
+;   (ignored due to fastapi's dependency injection system)
+; N805: first argument of a method should be named 'self'
+;   (ignored due to pydantic validators using 'cls')
+; C901: function is too complex
+extend-ignore = D106, B008, N805, C901
+
+per-file-ignores =
+    ; DAR201: The docstring is missing a return from definition.
+    src/audio_api/api/v1/endpoints/*:DAR201
+    ; D104: Missing docstring in public package
+    ; F401: module imported but unused
+    __init__.py:D104,F401
+
+; flake8-pytest-style
+pytest-fixture-no-parentheses = true
+pytest-parametrize-names-type = csv
+
+; darglint
+docstring_style=google
+strictness=short
