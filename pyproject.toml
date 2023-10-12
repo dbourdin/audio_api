@@ -10,7 +10,6 @@ fastapi = "^0.103.2"
 fastapi-utils = "^0.2.1"
 
 [tool.poetry.group.dev.dependencies]
-ipdb = "^0.13.13"
 pytest = "^7.4.2"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
 
