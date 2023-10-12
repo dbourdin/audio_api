@@ -14,11 +14,11 @@ function wait_for_db {
 docker-compose -f "$SCRIPT_DIR"/../docker/docker-compose.yml down
 
 # Start environment and wait for DB
-docker-compose -f "$SCRIPT_DIR"/../docker/docker-compose.yml up -d users-api
+docker-compose -f "$SCRIPT_DIR"/../docker/docker-compose.yml up -d audio-api
 wait_for_db
 
 # Run tests
-docker-compose -f "$SCRIPT_DIR"/../docker/docker-compose.yml exec users-api pytest --cov="users_api" $@
+docker-compose -f "$SCRIPT_DIR"/../docker/docker-compose.yml exec audio-api pytest --cov="audio_api" $@
 
 # Tear down environment
 docker-compose -f "$SCRIPT_DIR"/../docker/docker-compose.yml down
