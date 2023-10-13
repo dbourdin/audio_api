@@ -150,7 +150,7 @@ async def delete(
     *,
     db: Session = Depends(deps.get_db),
     program_id: uuid.UUID,
-) -> Any:
+):
     """Delete an existing Program.
 
     Args:
