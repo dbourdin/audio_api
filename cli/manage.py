@@ -6,10 +6,10 @@ import os
 from pprint import pformat
 from typing import Annotated
 
+import alembic.config
 import typer
 import uvicorn
 
-import alembic.config
 from audio_api.settings import get_settings
 
 app = typer.Typer()
