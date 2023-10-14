@@ -24,6 +24,14 @@ class BaseRadioProgramSchema(APISchema):
     url: str | None
 
 
+class RadioProgramSchema(BaseRadioProgramSchema):
+    """RadioProgramSchema with all RadioProgram parameters."""
+
+    program_id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+
 class RadioProgramCreateIn(BaseRadioProgramSchema):
     """Parameters received in a POST request."""
 
@@ -32,19 +40,15 @@ class RadioProgramCreateDB(RadioProgramCreateIn):
     """Model used to create a new record in a POST request."""
 
 
-class RadioProgramCreateOut(BaseRadioProgramSchema):
+class RadioProgramCreateOut(RadioProgramSchema):
     """Parameters returned in a POST request."""
 
-    program_id: UUID
-    created_at: datetime
-    updated_at: datetime
 
-
-class RadioProgramGet(RadioProgramCreateOut):
+class RadioProgramGet(RadioProgramSchema):
     """Parameters returned in a GET request."""
 
 
-class RadioProgramList(RadioProgramGet):
+class RadioProgramList(RadioProgramSchema):
     """Parameters returned in a GET LIST request."""
 
 
