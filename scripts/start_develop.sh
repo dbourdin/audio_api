@@ -16,5 +16,5 @@ wait_for_db
 echo "Creating 'uuid-ossp' extension"
 docker-compose -f "$SCRIPT_DIR"/../docker/docker-compose.yml exec db psql --user postgres -d audio_api -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'
 
-# echo "Applying migrations"
-# docker-compose -f "$SCRIPT_DIR"/../docker/docker-compose.yml exec audio-api poetry run manage migrate
+ echo "Applying migrations"
+ docker-compose -f "$SCRIPT_DIR"/../docker/docker-compose.yml exec audio-api poetry run manage migrate
