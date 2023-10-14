@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import now
 
 
 @as_declarative()
-class Base:
+class SqlAlchemyModel:
     """SQLAlchemy base class."""
 
     __name__: str

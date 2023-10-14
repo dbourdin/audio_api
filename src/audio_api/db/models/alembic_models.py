@@ -2,5 +2,5 @@
 # imported by Alembic
 # flake8: noqa
 
-from audio_api.db.base_class import Base
+from audio_api.db.models.base_db_model import SqlAlchemyModel
 from audio_api.db.models import RadioProgram

@@ -9,7 +9,7 @@ from sqlalchemy_utils import create_database, database_exists
 
 from audio_api.api import deps
 from audio_api.app import app
-from audio_api.db.base_class import Base
+from audio_api.db.models.base_db_model import SqlAlchemyModel
 from audio_api.settings import get_settings
 
 settings = get_settings()
@@ -43,9 +43,9 @@ def init_db(test_db_uri: PostgresDsn) -> Session:
 
     # Create the tables at the beginning of the test session
     # And destroy them at the end
-    Base.metadata.create_all(bind=engine)
+    SqlAlchemyModel.metadata.create_all(bind=engine)
     yield testing_session_local
-    Base.metadata.drop_all(bind=engine)
+    SqlAlchemyModel.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def db_fixture(testing_session_local):
         db.close()
 
         # Empty all tables after each test
-        tables = reversed(Base.metadata.sorted_tables)
+        tables = reversed(SqlAlchemyModel.metadata.sorted_tables)
         if any(tables):
             con = testing_session_local()
             con.execute(

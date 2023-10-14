@@ -4,10 +4,10 @@ from sqlalchemy import Column, Date, Numeric, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declared_attr
 
-from audio_api.db.base_class import Base
+from audio_api.db.models.base_db_model import SqlAlchemyModel
 
 
-class RadioProgram(Base):
+class RadioProgram(SqlAlchemyModel):
     """RadioProgram database table."""
 
     program_id = Column(
