@@ -9,7 +9,7 @@ from sqlalchemy_utils import create_database, database_exists
 
 from audio_api.api import deps
 from audio_api.app import app
-from audio_api.db.models.base_db_model import SqlAlchemyModel
+from audio_api.db.models.base_model import SqlAlchemyModel
 from audio_api.settings import get_settings
 
 settings = get_settings()

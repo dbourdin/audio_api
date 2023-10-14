@@ -4,7 +4,7 @@ from sqlalchemy import Column, Date, Numeric, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declared_attr
 
-from audio_api.db.models.base_db_model import SqlAlchemyModel
+from audio_api.db.models.base_model import SqlAlchemyModel
 
 
 class RadioProgram(SqlAlchemyModel):

@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from audio_api.db.models.base_db_model import SqlAlchemyModel
+from audio_api.db.models.base_model import SqlAlchemyModel
 
 ModelType = TypeVar("ModelType", bound=SqlAlchemyModel)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
