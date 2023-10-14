@@ -1,6 +1,6 @@
 """RadioProgram database table."""
 
-from sqlalchemy import Column, Date, Numeric, String, text
+from sqlalchemy import Column, Date, Integer, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declared_attr
 
@@ -20,7 +20,7 @@ class RadioProgram(SqlAlchemyModel):
     title = Column(String, nullable=False)
     description = Column(String)
     air_date = Column(Date)
-    length = Column(Numeric)  # TODO: Consider convert to Int
+    length = Column(Integer)
     spotify_playlist = Column(String)
     url = Column(String)
 

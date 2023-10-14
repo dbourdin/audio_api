@@ -34,15 +34,17 @@ async def get(
     Args:
         db (Session): A database session
         program_id (uuid.UUID): The uuid of the program to retrieve
-    """
-    program = schemas.RadioProgramGet(
-        uuid=uuid.uuid4(),
-        title="Shopping 2.0 #1",
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
-    )
 
-    return program
+    Raises:
+        HTTPException: HTTP_404_NOT_FOUND: If the radio program does not exist.
+    """
+    db_program = radio_program.get_by_uuid(db, uuid=program_id)
+    if db_program is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Radio program not found",
+        )
+    return db_program
 
 
 @router.get(
@@ -59,22 +61,8 @@ def retrieve_many(
     Args:
         db (Session): A database session
     """
-    programs = [
-        schemas.RadioProgramList(
-            uuid=uuid.uuid4(),
-            title="Shopping 2.0 #1",
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        ),
-        schemas.RadioProgramList(
-            uuid=uuid.uuid4(),
-            title="Shopping 2.0 #2",
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        ),
-    ]
-
-    return programs
+    db_programs = radio_program.get_multi(db)
+    return db_programs
 
 
 @router.post(

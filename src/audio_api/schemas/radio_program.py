@@ -14,14 +14,14 @@ class BaseRadioProgramSchema(APISchema):
     title: str = Field(example="Shopping 2.0 #1")
     description: str | None = Field(example="Pilot episode")
     air_date: date | None
-    length: float | 0  # TODO: Consider convert to Int
+    length: int | None = Field(example=3600)
     spotify_playlist: str | None = Field(
         example=(
             "https://open.spotify.com/playlist/"
             "37i9dQZF1DWSDoVybeQisg?si=e15a3a65324a4628"
         )
     )
-    url = str | None
+    url: str | None
 
 
 class RadioProgramCreateIn(BaseRadioProgramSchema):
@@ -35,7 +35,7 @@ class RadioProgramCreateDB(RadioProgramCreateIn):
 class RadioProgramCreateOut(BaseRadioProgramSchema):
     """Parameters returned in a POST request."""
 
-    uuid: UUID
+    program_id: UUID
     created_at: datetime
     updated_at: datetime
 
