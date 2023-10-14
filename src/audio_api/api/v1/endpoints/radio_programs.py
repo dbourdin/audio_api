@@ -4,18 +4,20 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from audio_api import schemas
 from audio_api.api import deps
+from audio_api.persistence.repositories import radio_program
 
 router = APIRouter()
 
 
 @router.get(
     "/{program_id}",
-    response_model=schemas.ProgramGet,
+    response_model=schemas.RadioProgramGet,
     responses={
         status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
     },
@@ -33,7 +35,7 @@ async def get(
         db (Session): A database session
         program_id (uuid.UUID): The uuid of the program to retrieve
     """
-    program = schemas.ProgramGet(
+    program = schemas.RadioProgramGet(
         uuid=uuid.uuid4(),
         title="Shopping 2.0 #1",
         created_at=datetime.now(),
@@ -45,7 +47,7 @@ async def get(
 
 @router.get(
     "",
-    response_model=list[schemas.ProgramList],
+    response_model=list[schemas.RadioProgramList],
     summary="List Programs",
     description="Get a list of Programs",
 )
@@ -58,13 +60,13 @@ def retrieve_many(
         db (Session): A database session
     """
     programs = [
-        schemas.ProgramList(
+        schemas.RadioProgramList(
             uuid=uuid.uuid4(),
             title="Shopping 2.0 #1",
             created_at=datetime.now(),
             updated_at=datetime.now(),
         ),
-        schemas.ProgramList(
+        schemas.RadioProgramList(
             uuid=uuid.uuid4(),
             title="Shopping 2.0 #2",
             created_at=datetime.now(),
@@ -77,7 +79,7 @@ def retrieve_many(
 
 @router.post(
     "",
-    response_model=schemas.ProgramCreateOut,
+    response_model=schemas.RadioProgramCreateOut,
     status_code=status.HTTP_201_CREATED,
     responses={status.HTTP_400_BAD_REQUEST: {"model": schemas.APIMessage}},
     summary="Create a Program",
@@ -86,26 +88,30 @@ def retrieve_many(
 async def create(
     *,
     db: Session = Depends(deps.get_db),
-    program_in: schemas.ProgramCreateIn,
+    program_in: schemas.RadioProgramCreateIn,
 ) -> Any:
     """Create a new program.
 
     Args:
         db (Session): A database session
-        program_in (schemas.ProgramCreateIn): Input data
+        program_in (schemas.RadioProgramCreateIn): Input data
+
+    Raises:
+        HTTPException: HTTP_400_BAD_REQUEST: If failed to create radio program.
     """
-    db_program = schemas.ProgramCreateOut(
-        uuid=uuid.uuid4(),
-        title=program_in.title,
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
-    )
+    try:
+        db_program = radio_program.create(db, obj_in=program_in)
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to create new radio program",
+        )
     return db_program
 
 
 @router.put(
     "/{program_id}",
-    response_model=schemas.ProgramUpdateOut,
+    response_model=schemas.RadioProgramUpdateOut,
     responses={
         status.HTTP_403_FORBIDDEN: {"model": schemas.APIMessage},
         status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
@@ -117,16 +123,16 @@ async def update(
     *,
     db: Session = Depends(deps.get_db),
     program_id: uuid.UUID,
-    program_in: schemas.ProgramUpdateIn,
+    program_in: schemas.RadioProgramUpdateIn,
 ) -> Any:
     """Update an existing Program.
 
     Args:
         db (Session): A database session
         program_id (uuid.UUID): The uuid of the program to modify
-        program_in (schemas.ProgramUpdateIn): The new data
+        program_in (schemas.RadioProgramUpdateIn): The new data
     """
-    updated_instance = schemas.ProgramUpdateOut(
+    updated_instance = schemas.RadioProgramUpdateOut(
         uuid=program_id,
         title=program_in.title,
         created_at=datetime.now(),
