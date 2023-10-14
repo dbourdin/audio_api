@@ -4,7 +4,7 @@ from collections.abc import Generator
 
 from fastapi.security import OAuth2PasswordBearer
 
-from audio_api.db.session import SessionLocal
+from audio_api.persistence.session import SessionLocal
 from audio_api.settings import get_settings
 
 settings = get_settings()
