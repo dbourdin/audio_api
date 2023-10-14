@@ -12,21 +12,23 @@ fastapi-utils = "^0.2.1"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
-typer = "^0.9.0"
 pytest-cov = "^4.1.0"
 httpx = "^0.25.0"
 psycopg2-binary = "^2.9.9"
 sqlalchemy-utils = "^0.41.1"
+alembic = "^1.12.0"
+typer = "^0.9.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-manage = 'audio_api.cli.manage:app'
+manage = 'cli.manage:app'
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
 known_first_party = ["audio_api"]
+known_third_party = ["alembic"]
 default_section="THIRDPARTY"

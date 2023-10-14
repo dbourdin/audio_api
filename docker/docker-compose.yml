@@ -22,7 +22,9 @@ services:
     volumes:
       - ../src/audio_api:/app/audio_api
       - ../tests:/app/tests
+      - ../cli/manage.py:/app/cli/manage.py
       - ../alembic:/app/alembic
+
       # Mount poetry files to edit them from inside the container
       - ../pyproject.toml:/app/pyproject.toml
       - ../poetry.lock:/app/poetry.lock
