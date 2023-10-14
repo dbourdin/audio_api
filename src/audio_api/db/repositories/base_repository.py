@@ -1,4 +1,4 @@
-"""Base CRUD implementation."""
+"""Base Repository implementation."""
 
 from typing import Any, Generic, TypeVar
 
@@ -14,10 +14,10 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
 class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    """Base CRUD class."""
+    """Base Repository class."""
 
     def __init__(self, model: type[ModelType]):
-        """CRUD object with default methods to Create, Read, Update, Delete (CRUD).
+        """Repository with default methods to Create, Read, Update, Delete (CRUD).
 
         Args:
             model (Type[ModelType]): A SQLAlchemy model class
