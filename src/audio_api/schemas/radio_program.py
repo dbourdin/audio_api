@@ -12,7 +12,7 @@ class BaseRadioProgramSchema(APISchema):
     """Base RadioProgram API Model."""
 
     title: str = Field(example="Shopping 2.0 #1")
-    description: str | None = Field(example="Pilot episode")
+    description: str | None = Field(example="Pilot program")
     air_date: date | None
     length: int | None = Field(example=3600)
     spotify_playlist: str | None = Field(
