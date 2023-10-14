@@ -19,7 +19,7 @@ router = APIRouter()
     "/{program_id}",
     response_model=schemas.RadioProgramGet,
     responses={
-        status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
+        status.HTTP_404_NOT_FOUND: {"model": schemas.RadioProgramGet},
     },
     summary="Retrieve a single Program by UUID",
     description="Retrieve single a Program by UUID",
@@ -38,7 +38,7 @@ async def get(
     Raises:
         HTTPException: HTTP_404_NOT_FOUND: If the radio program does not exist.
     """
-    db_program = radio_program.get_by_uuid(db, uuid=program_id)
+    db_program = radio_program.get_by_program_id(db, program_id=program_id)
     if db_program is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
