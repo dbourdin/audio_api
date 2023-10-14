@@ -11,4 +11,4 @@ class RadioProgramRepository(
     """RadioProgramRepository to handle DB persistence."""
 
 
-radio_program_repository = RadioProgramRepository(RadioProgram)
+radio_program = RadioProgramRepository(RadioProgram)
