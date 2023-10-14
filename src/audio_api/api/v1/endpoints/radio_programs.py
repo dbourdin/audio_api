@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from audio_api import schemas
 from audio_api.api import deps
-from audio_api.persistence.repositories import radio_program
+from audio_api.persistence.repositories import radio_programs
 
 router = APIRouter()
 
@@ -38,7 +38,7 @@ async def get(
     Raises:
         HTTPException: HTTP_404_NOT_FOUND: If the radio program does not exist.
     """
-    db_program = radio_program.get_by_program_id(db, program_id=program_id)
+    db_program = radio_programs.get_by_program_id(db, program_id=program_id)
     if db_program is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -61,7 +61,7 @@ def retrieve_many(
     Args:
         db (Session): A database session
     """
-    db_programs = radio_program.get_multi(db)
+    db_programs = radio_programs.get_multi(db)
     return db_programs
 
 
@@ -88,7 +88,7 @@ async def create(
         HTTPException: HTTP_400_BAD_REQUEST: If failed to create radio program.
     """
     try:
-        db_program = radio_program.create(db, obj_in=program_in)
+        db_program = radio_programs.create(db, obj_in=program_in)
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

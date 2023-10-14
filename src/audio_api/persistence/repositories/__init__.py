@@ -1,1 +1,1 @@
-from .radio_program import radio_program
+from .radio_program import radio_programs
