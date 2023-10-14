@@ -2,11 +2,13 @@
 
 """Main API CLI file."""
 
+import os
 from pprint import pformat
 
 import typer
 import uvicorn
 
+import alembic.config
 from audio_api.settings import get_settings
 
 app = typer.Typer()
@@ -28,6 +30,28 @@ def start():
     uvicorn_settings["reload"] = False
     print(f"Starting uvicorn with these settings: \n{pformat(uvicorn_settings)}")
     uvicorn.run(**uvicorn_settings)
+
+
+@app.command()
+def migrate():
+    """Apply migrations to the database."""
+    os.chdir("alembic")
+    alembic_args = [
+        "upgrade",
+        "head",
+    ]
+    alembic.config.main(argv=alembic_args)
+
+
+@app.command()
+def makemigrations():
+    """Make new migrations."""
+    os.chdir("alembic")
+    alembic_args = [
+        "revision",
+        "--autogenerate",
+    ]
+    alembic.config.main(argv=alembic_args)
 
 
 if __name__ == "__main__":
