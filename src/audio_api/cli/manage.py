@@ -4,6 +4,7 @@
 
 import os
 from pprint import pformat
+from typing import Annotated
 
 import typer
 import uvicorn
@@ -44,13 +45,15 @@ def migrate():
 
 
 @app.command()
-def makemigrations():
+def makemigrations(message: Annotated[str, typer.Option("-m")] = None):
     """Make new migrations."""
     os.chdir("alembic")
     alembic_args = [
         "revision",
         "--autogenerate",
     ]
+    if message:
+        alembic_args.append(f'-m "{message}"')
     alembic.config.main(argv=alembic_args)
 
 
