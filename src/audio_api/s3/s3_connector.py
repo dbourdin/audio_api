@@ -3,8 +3,9 @@
 import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
+from botocore.response import StreamingBody
 
-from audio_api.settings import get_settings
+from audio_api.settings import EnvironmentEnum, get_settings
 
 settings = get_settings()
 
@@ -71,9 +72,11 @@ class S3Connector:
                 f"Unsuccessful S3 put_object response. Status: {status}"
             )
 
-        return f"'https://{self.bucket_name}.s3.amazonaws.com/{object_key}"
+        if settings.ENVIRONMENT == EnvironmentEnum.development:
+            return f"{settings.S3_ENDPOINT_URL}/{self.bucket_name}/{object_key}"
+        return f"https://{self.bucket_name}.s3.amazonaws.com/{object_key}"
 
-    def read_object(self, object_key: str) -> bytes:
+    def read_object(self, object_key: str) -> StreamingBody:
         """Read an object from the S3 bucket.
 
         Args:
@@ -84,7 +87,7 @@ class S3Connector:
             S3PersistenceError: If failed to retrieve object from S3.
 
         Returns:
-            bytes: The content of the file.
+            StreamingBody: The content of the file.
         """
         try:
             response = self.s3_client.get_object(
