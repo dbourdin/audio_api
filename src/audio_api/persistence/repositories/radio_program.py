@@ -27,4 +27,4 @@ class RadioProgramRepository(
         return db.query(self.model).filter(self.model.program_id == program_id).first()
 
 
-radio_programs = RadioProgramRepository(RadioProgram)
+radio_programs_repository = RadioProgramRepository(RadioProgram)
