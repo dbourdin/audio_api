@@ -1,4 +1,5 @@
 """S3Connector class to write and read files from S3."""
+from typing import BinaryIO
 
 import boto3
 from botocore.client import BaseClient
@@ -44,13 +45,13 @@ class S3Connector:
         self.s3_client = get_s3_client()
         self.bucket_name = bucket_name
 
-    def store(self, object_key: str, object_data: bytes) -> str:
+    def store(self, object_key: str, object_data: BinaryIO) -> str:
         """
         Upload an object to the S3 bucket.
 
         Args:
             object_key (str): The key (path) of the object in the S3 bucket.
-            object_data (bytes): The data to be stored in the object.
+            object_data (BinaryIO): The data to be stored in the object.
 
         Raises:
             S3ClientError: If failed to get response from S3.
