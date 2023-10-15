@@ -1,8 +1,8 @@
-""" "create_radio_program_table"
+""" "create_radio_programs_table"
 
-Revision ID: 023cb74d5767
+Revision ID: 740af7d90bcc
 Revises: 
-Create Date: 2023-10-14 05:49:02.450836
+Create Date: 2023-10-14 05:42:41.355916
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '023cb74d5767'
+revision: str = '740af7d90bcc'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,7 +28,7 @@ def upgrade() -> None:
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('air_date', sa.Date(), nullable=True),
-    sa.Column('length', sa.Numeric(), nullable=True),
+    sa.Column('length', sa.Integer(), nullable=True),
     sa.Column('spotify_playlist', sa.String(), nullable=True),
     sa.Column('url', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id')
