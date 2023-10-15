@@ -1,7 +1,6 @@
 """Endpoints related to Radio Programs."""
 
 import uuid
-from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -101,7 +100,6 @@ async def create(
     "/{program_id}",
     response_model=schemas.RadioProgramUpdateOut,
     responses={
-        status.HTTP_403_FORBIDDEN: {"model": schemas.APIMessage},
         status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
     },
     summary="Edit a Program",
@@ -119,21 +117,24 @@ async def update(
         db (Session): A database session
         program_id (uuid.UUID): The uuid of the program to modify
         program_in (schemas.RadioProgramUpdateIn): The new data
-    """
-    updated_instance = schemas.RadioProgramUpdateOut(
-        uuid=program_id,
-        title=program_in.title,
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
-    )
 
-    return updated_instance
+    Raises:
+        HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
+    """
+    db_program = radio_programs.get_by_program_id(db, program_id=program_id)
+    if db_program is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Program not found",
+        )
+    updated_program = radio_programs.update(db, db_obj=db_program, obj_in=program_in)
+
+    return updated_program
 
 
 @router.delete(
     "/{program_id}",
     responses={
-        status.HTTP_403_FORBIDDEN: {"model": schemas.APIMessage},
         status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
     },
     summary="Delete a Program",
@@ -150,4 +151,16 @@ async def delete(
     Args:
         db (Session): A database session
         program_id (uuid.UUID): The uuid of the program to delete
+
+    Raises:
+        HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
     """
+    db_program = radio_programs.get_by_program_id(db, program_id=program_id)
+
+    if db_program is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Program not found",
+        )
+
+    radio_programs.remove(db, id=db_program.id)
