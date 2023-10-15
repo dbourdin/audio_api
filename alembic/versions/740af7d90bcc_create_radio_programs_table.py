@@ -1,4 +1,4 @@
-""" "add_radio_programs_table"
+""" "create_radio_programs_table"
 
 Revision ID: 740af7d90bcc
 Revises: 
