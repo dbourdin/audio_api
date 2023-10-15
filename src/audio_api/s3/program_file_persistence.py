@@ -2,6 +2,8 @@
 
 import datetime
 
+from botocore.response import StreamingBody
+
 from audio_api.s3.s3_connector import S3Connector
 from audio_api.schemas import RadioProgramCreateIn
 from audio_api.settings import get_settings
@@ -31,6 +33,18 @@ class ProgramFilePersistence:
         timestamp = current_time.strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"{timestamp}_{radio_program.title}"
         return cls.s3_connector.store(object_key=file_name, object_data=program_file)
+
+    @classmethod
+    def read_program(cls, file_name: str) -> StreamingBody:
+        """Read an object persisted in RADIO_PROGRAMS_BUCKET by file_name.
+
+        Args:
+            file_name: File to be read.
+
+        Returns:
+            StreamingBody: Persisted object in RADIO_PROGRAMS_BUCKET.
+        """
+        return cls.s3_connector.read_object(object_key=file_name)
 
     @classmethod
     def delete_program(cls, file_name: str):
