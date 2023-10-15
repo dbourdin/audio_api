@@ -8,6 +8,7 @@ authors = ["Damian Bourdin <damian.bourdin@gmail.com>"]
 python = "^3.10"
 fastapi = "^0.103.2"
 fastapi-utils = "^0.2.1"
+boto3 = "^1.28.63"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
