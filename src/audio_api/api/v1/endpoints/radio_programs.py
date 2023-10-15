@@ -3,13 +3,15 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from audio_api import schemas
 from audio_api.api import deps
-from audio_api.persistence.repositories import radio_programs
+from audio_api.domain.radio_programs import RadioPrograms
+from audio_api.persistence.repositories import radio_programs_repository
+from audio_api.schemas.utils import as_form
 
 router = APIRouter()
 
@@ -37,7 +39,7 @@ async def get(
     Raises:
         HTTPException: HTTP_404_NOT_FOUND: If the radio program does not exist.
     """
-    db_program = radio_programs.get_by_program_id(db, program_id=program_id)
+    db_program = radio_programs_repository.get_by_program_id(db, program_id=program_id)
     if db_program is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -60,7 +62,7 @@ def retrieve_many(
     Args:
         db (Session): A database session
     """
-    db_programs = radio_programs.get_multi(db)
+    db_programs = radio_programs_repository.get_multi(db)
     return db_programs
 
 
@@ -75,25 +77,30 @@ def retrieve_many(
 async def create(
     *,
     db: Session = Depends(deps.get_db),
-    program_in: schemas.RadioProgramCreateIn,
+    program_in: schemas.RadioProgramCreateIn = Depends(
+        as_form(schemas.RadioProgramCreateIn)
+    ),
+    program_file: UploadFile = File(...),
 ) -> Any:
     """Create a new program.
 
     Args:
         db (Session): A database session
         program_in (schemas.RadioProgramCreateIn): Input data
+        program_file: MP3 file containing the radio program
 
     Raises:
         HTTPException: HTTP_400_BAD_REQUEST: If failed to create radio program.
     """
     try:
-        db_program = radio_programs.create(db, obj_in=program_in)
+        return RadioPrograms.create(
+            db=db, radio_program=program_in, program_file=program_file.file
+        )
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to create new radio program",
         )
-    return db_program
 
 
 @router.put(
@@ -121,13 +128,15 @@ async def update(
     Raises:
         HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
     """
-    db_program = radio_programs.get_by_program_id(db, program_id=program_id)
+    db_program = radio_programs_repository.get_by_program_id(db, program_id=program_id)
     if db_program is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Program not found",
         )
-    updated_program = radio_programs.update(db, db_obj=db_program, obj_in=program_in)
+    updated_program = radio_programs_repository.update(
+        db, db_obj=db_program, obj_in=program_in
+    )
 
     return updated_program
 
@@ -155,7 +164,7 @@ async def delete(
     Raises:
         HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
     """
-    db_program = radio_programs.get_by_program_id(db, program_id=program_id)
+    db_program = radio_programs_repository.get_by_program_id(db, program_id=program_id)
 
     if db_program is None:
         raise HTTPException(
@@ -163,4 +172,4 @@ async def delete(
             detail="Program not found",
         )
 
-    radio_programs.remove(db, id=db_program.id)
+    radio_programs_repository.remove(db, id=db_program.id)
