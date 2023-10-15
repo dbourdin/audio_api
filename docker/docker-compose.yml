@@ -54,6 +54,5 @@ services:
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - 8001:80
-    restart: unless-stopped
     depends_on:
       - db
