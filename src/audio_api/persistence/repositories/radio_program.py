@@ -14,22 +14,37 @@ class RadioProgramDatabaseError(Exception):
     """RadioProgramDatabaseError class to handle DB errors."""
 
 
+class RadioProgramNotFoundError(Exception):
+    """RadioProgramNotFoundError class."""
+
+
 class RadioProgramRepository(
     BaseRepository[RadioProgram, RadioProgramCreateDB, RadioProgramUpdateDB]
 ):
     """RadioProgramRepository to handle DB persistence."""
 
-    def get_by_program_id(self, db: Session, program_id: UUID) -> RadioProgram | None:
-        """Get a single radio program by program_id.
+    def get_by_program_id(self, db: Session, program_id: UUID) -> RadioProgram:
+        """Get a RadioProgram program by program_id.
 
         Args:
             db (Session): A database session
             program_id (UUID): The program_id to retrieve
 
+        Raises:
+            RadioProgramNotFoundError: If the program is not found
+
         Returns:
-            Optional[RadioProgram]: The retrieved radio program
+            RadioProgram: The retrieved radio program
         """
-        return db.query(self.model).filter(self.model.program_id == program_id).first()
+        db_program = (
+            db.query(self.model).filter(self.model.program_id == program_id).first()
+        )
+        if db_program is None:
+            raise RadioProgramNotFoundError(
+                f"Couldn't find RadioProgram with id: {program_id}"
+            )
+
+        return db_program
 
     def update(
         self,
