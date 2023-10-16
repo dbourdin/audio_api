@@ -4,7 +4,6 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from audio_api import schemas
@@ -12,6 +11,7 @@ from audio_api.api import deps
 from audio_api.domain.radio_programs import RadioPrograms
 from audio_api.persistence.repositories import radio_programs_repository
 from audio_api.persistence.repositories.radio_program import (
+    RadioProgramAlreadyExistsError,
     RadioProgramDatabaseError,
     RadioProgramNotFoundError,
 )
@@ -113,16 +113,30 @@ async def create(
 
     Raises:
         HTTPException: HTTP_400_BAD_REQUEST
-            If failed to create radio program.
+            If RadioProgram already exists.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to store RadioProgram on DB.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to upload RadioProgram file to S3.
     """
     try:
         return RadioPrograms.create(
             db=db, radio_program=program_in, program_file=program_file.file
         )
-    except IntegrityError:
+    except RadioProgramAlreadyExistsError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to create new radio program",
+            detail="RadioProgram already exists.",
+        )
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to store RadioProgram in the DB.",
+        )
+    except RadioProgramS3Error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload RadioProgram file to S3.",
         )
 
 
