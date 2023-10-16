@@ -11,6 +11,11 @@ from audio_api import schemas
 from audio_api.api import deps
 from audio_api.domain.radio_programs import RadioPrograms
 from audio_api.persistence.repositories import radio_programs_repository
+from audio_api.persistence.repositories.radio_program import (
+    RadioProgramDatabaseError,
+    RadioProgramNotFoundError,
+)
+from audio_api.s3.program_file_persistence import RadioProgramS3Error
 from audio_api.schemas.utils import as_form
 
 router = APIRouter()
@@ -126,18 +131,30 @@ async def update(
 
     Raises:
         HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR: If failed to store
+            RadioProgram on DB.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR: If failed to upload
+            RadioProgram file to S3.
     """
-    db_program = radio_programs_repository.get_by_program_id(db, program_id=program_id)
-    if db_program is None:
+    try:
+        return RadioPrograms.update(
+            db=db, program_id=program_id, new_program=program_in
+        )
+    except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Program not found",
+            detail="Radio Program not found.",
         )
-    updated_program = radio_programs_repository.update(
-        db, db_obj=db_program, obj_in=program_in
-    )
-
-    return updated_program
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to store RadioProgram in the DB.",
+        )
+    except RadioProgramS3Error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload RadioProgram file to S3.",
+        )
 
 
 @router.delete(
