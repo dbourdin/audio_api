@@ -155,7 +155,7 @@ async def update(
     program_in: schemas.RadioProgramUpdateIn = Depends(
         as_form(schemas.RadioProgramUpdateIn)
     ),
-    program_file: UploadFile = File(...),
+    program_file: UploadFile = File(None),
 ) -> Any:
     """Update an existing RadioProgram.
 
@@ -173,13 +173,16 @@ async def update(
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to upload RadioProgram file to S3.
     """
+    update_args = {
+        "db": db,
+        "program_id": program_id,
+        "new_program": program_in,
+    }
+    if program_file:
+        update_args["program_file"] = program_file.file
+
     try:
-        return RadioPrograms.update(
-            db=db,
-            program_id=program_id,
-            new_program=program_in,
-            program_file=program_file.file,
-        )
+        return RadioPrograms.update(**update_args)
     except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
