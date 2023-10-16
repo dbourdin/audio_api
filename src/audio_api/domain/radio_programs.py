@@ -131,6 +131,7 @@ class RadioPrograms:
             RadioProgram: Model containing updated data.
         """
         db_program = cls.get(db=db, program_id=program_id)
+        existing_url = db_program.url
         update_program = schemas.RadioProgramUpdateDB(**new_program.dict())
 
         if program_file:
@@ -142,7 +143,7 @@ class RadioPrograms:
 
         try:
             updated_program = radio_programs_repository.update(
-                db=db, db_obj=db_program, obj_in=update_program
+                db=db, db_program=db_program, updated_program=update_program
             )
         except RadioProgramDatabaseError as e:
             if update_program.url:
@@ -150,8 +151,8 @@ class RadioPrograms:
 
             raise e
 
-        if updated_program.url and db_program.url:
-            cls._delete_file_from_s3_by_url(program_url=db_program.url)
+        if updated_program.url and existing_url:
+            cls._delete_file_from_s3_by_url(program_url=existing_url)
 
         return updated_program
 
