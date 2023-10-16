@@ -152,14 +152,18 @@ async def update(
     *,
     db: Session = Depends(deps.get_db),
     program_id: uuid.UUID,
-    program_in: schemas.RadioProgramUpdateIn,
+    program_in: schemas.RadioProgramUpdateIn = Depends(
+        as_form(schemas.RadioProgramUpdateIn)
+    ),
+    program_file: UploadFile = File(...),
 ) -> Any:
     """Update an existing RadioProgram.
 
     Args:
         db: A database session.
         program_id: The UUID of the RadioProgram to modify.
-        program_in: The RadioProgram.
+        program_in: The updated RadioProgram.
+        program_file: RadioProgram MP3 file.
 
     Raises:
         HTTPException: HTTP_404_NOT_FOUND
@@ -171,7 +175,10 @@ async def update(
     """
     try:
         return RadioPrograms.update(
-            db=db, program_id=program_id, new_program=program_in
+            db=db,
+            program_id=program_id,
+            new_program=program_in,
+            program_file=program_file.file,
         )
     except RadioProgramNotFoundError:
         raise HTTPException(
