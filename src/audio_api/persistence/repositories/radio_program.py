@@ -102,5 +102,25 @@ class RadioProgramRepository(
                 f"Failed to update RadioProgram {db_program.program_id}: {e}"
             )
 
+    def remove(self, db: Session, *, id: int) -> RadioProgram:
+        """Remove an existing RadioProgram from the DB.
+
+        Args:
+            db: A database session
+            id: ID of the RadioProgram to be removed.
+
+        Raises:
+            RadioProgramDatabaseError: If failed to remove existing RadioProgram.
+
+        Returns:
+            RadioProgram: The removed RadioProgram.
+        """
+        try:
+            return super().remove(db=db, id=id)
+        except DatabaseError as e:
+            raise RadioProgramDatabaseError(
+                f"Failed to remove existing RadioProgram: {e}"
+            )
+
 
 radio_programs_repository = RadioProgramRepository(RadioProgram)
