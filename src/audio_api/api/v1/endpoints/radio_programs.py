@@ -54,7 +54,7 @@ async def get(
     summary="List Programs",
     description="Get a list of Programs",
 )
-def retrieve_many(
+def get_all(
     db: Session = Depends(deps.get_db),
 ) -> Any:
     """Retrieve many programs.
@@ -62,8 +62,7 @@ def retrieve_many(
     Args:
         db (Session): A database session
     """
-    db_programs = radio_programs_repository.get_multi(db)
-    return db_programs
+    return RadioPrograms.get_all(db=db)
 
 
 @router.post(

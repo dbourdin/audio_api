@@ -36,6 +36,22 @@ class RadioPrograms:
         return cls.repository.get_by_program_id(db=db, program_id=program_id)
 
     @classmethod
+    def get_all(
+        cls,
+        *,
+        db: Session,
+    ) -> list[RadioProgram]:
+        """Get all RadioPrograms from DB.
+
+        Args:
+            db (Session): A database session.
+
+        Returns:
+            list[RadioProgram]: List containing all stored RadioPrograms.
+        """
+        return cls.repository.get_multi(db=db)
+
+    @classmethod
     def create(
         cls,
         *,
