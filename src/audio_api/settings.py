@@ -81,7 +81,16 @@ class APISettings(BaseSettings):
         )
 
 
-class Settings(APISettings):
+class S3Settings(BaseSettings):
+    """Includes Settings required to connect to S3."""
+
+    S3_ENDPOINT_URL: str
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    RADIO_PROGRAMS_BUCKET: str
+
+
+class Settings(APISettings, S3Settings):
     """API settings.
 
     Includes configuration tied specifically to this API.

@@ -3,13 +3,19 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.exc import IntegrityError
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from audio_api import schemas
 from audio_api.api import deps
-from audio_api.persistence.repositories import radio_programs
+from audio_api.domain.radio_programs import RadioPrograms
+from audio_api.persistence.repositories.radio_program import (
+    RadioProgramAlreadyExistsError,
+    RadioProgramDatabaseError,
+    RadioProgramNotFoundError,
+)
+from audio_api.s3.program_file_persistence import RadioProgramS3Error
+from audio_api.schemas.utils import as_form
 
 router = APIRouter()
 
@@ -20,8 +26,8 @@ router = APIRouter()
     responses={
         status.HTTP_404_NOT_FOUND: {"model": schemas.RadioProgramGet},
     },
-    summary="Retrieve a single Program by UUID",
-    description="Retrieve single a Program by UUID",
+    summary="Retrieve a single RadioProgram by UUID",
+    description="Retrieve single a RadioProgram by UUID",
 )
 async def get(
     *,
@@ -31,37 +37,54 @@ async def get(
     """Retrieve an existing Program.
 
     Args:
-        db (Session): A database session
-        program_id (uuid.UUID): The uuid of the program to retrieve
+        db: A database session.
+        program_id: The UUID of the RadioProgram to retrieve.
 
     Raises:
-        HTTPException: HTTP_404_NOT_FOUND: If the radio program does not exist.
+        HTTPException: HTTP_404_NOT_FOUND
+            If RadioProgram does not exist.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to retrieve RadioProgram from the DB.
     """
-    db_program = radio_programs.get_by_program_id(db, program_id=program_id)
-    if db_program is None:
+    try:
+        return RadioPrograms.get(db=db, program_id=program_id)
+    except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Radio program not found",
+            detail="RadioProgram not found.",
         )
-    return db_program
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve RadioProgram from the DB.",
+        )
 
 
 @router.get(
     "",
     response_model=list[schemas.RadioProgramList],
-    summary="List Programs",
-    description="Get a list of Programs",
+    summary="List RadioProgram",
+    description="Get a list of RadioProgram",
 )
-def retrieve_many(
+def get_all(
     db: Session = Depends(deps.get_db),
 ) -> Any:
-    """Retrieve many programs.
+    """Retrieve all RadioProgram.
 
     Args:
-        db (Session): A database session
+        db: A database session
+
+    Raises:
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to retrieve RadioPrograms.
     """
-    db_programs = radio_programs.get_multi(db)
-    return db_programs
+    try:
+        return RadioPrograms.get_all(db=db)
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve RadioPrograms from the DB.",
+        )
 
 
 @router.post(
@@ -69,31 +92,51 @@ def retrieve_many(
     response_model=schemas.RadioProgramCreateOut,
     status_code=status.HTTP_201_CREATED,
     responses={status.HTTP_400_BAD_REQUEST: {"model": schemas.APIMessage}},
-    summary="Create a Program",
-    description="Create a Program",
+    summary="Create a RadioProgram",
+    description="Create a RadioProgram",
 )
 async def create(
     *,
     db: Session = Depends(deps.get_db),
-    program_in: schemas.RadioProgramCreateIn,
+    program_in: schemas.RadioProgramCreateIn = Depends(
+        as_form(schemas.RadioProgramCreateIn)
+    ),
+    program_file: UploadFile = File(...),
 ) -> Any:
-    """Create a new program.
+    """Create a new RadioProgram.
 
     Args:
-        db (Session): A database session
-        program_in (schemas.RadioProgramCreateIn): Input data
+        db: A database session.
+        program_in: New RadioProgram.
+        program_file: RadioProgram MP3 file.
 
     Raises:
-        HTTPException: HTTP_400_BAD_REQUEST: If failed to create radio program.
+        HTTPException: HTTP_400_BAD_REQUEST
+            If RadioProgram already exists.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to store RadioProgram on DB.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to upload RadioProgram file to S3.
     """
     try:
-        db_program = radio_programs.create(db, obj_in=program_in)
-    except IntegrityError:
+        return RadioPrograms.create(
+            db=db, radio_program=program_in, program_file=program_file.file
+        )
+    except RadioProgramAlreadyExistsError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to create new radio program",
+            detail="RadioProgram already exists.",
         )
-    return db_program
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to store RadioProgram in the DB.",
+        )
+    except RadioProgramS3Error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload RadioProgram file to S3.",
+        )
 
 
 @router.put(
@@ -102,34 +145,59 @@ async def create(
     responses={
         status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
     },
-    summary="Edit a Program",
-    description="Edit a Program",
+    summary="Edit a RadioProgram",
+    description="Edit a RadioProgram",
 )
 async def update(
     *,
     db: Session = Depends(deps.get_db),
     program_id: uuid.UUID,
-    program_in: schemas.RadioProgramUpdateIn,
+    program_in: schemas.RadioProgramUpdateIn = Depends(
+        as_form(schemas.RadioProgramUpdateIn)
+    ),
+    program_file: UploadFile = File(None),
 ) -> Any:
-    """Update an existing Program.
+    """Update an existing RadioProgram.
 
     Args:
-        db (Session): A database session
-        program_id (uuid.UUID): The uuid of the program to modify
-        program_in (schemas.RadioProgramUpdateIn): The new data
+        db: A database session.
+        program_id: The UUID of the RadioProgram to modify.
+        program_in: The updated RadioProgram.
+        program_file: RadioProgram MP3 file.
 
     Raises:
-        HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
+        HTTPException: HTTP_404_NOT_FOUND
+            If RadioProgram does not exist.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to store RadioProgram on DB.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to upload RadioProgram file to S3.
     """
-    db_program = radio_programs.get_by_program_id(db, program_id=program_id)
-    if db_program is None:
+    update_args = {
+        "db": db,
+        "program_id": program_id,
+        "new_program": program_in,
+    }
+    if program_file:
+        update_args["program_file"] = program_file.file
+
+    try:
+        return RadioPrograms.update(**update_args)
+    except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Program not found",
+            detail="RadioProgram not found.",
         )
-    updated_program = radio_programs.update(db, db_obj=db_program, obj_in=program_in)
-
-    return updated_program
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to store RadioProgram in the DB.",
+        )
+    except RadioProgramS3Error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload RadioProgram file to S3.",
+        )
 
 
 @router.delete(
@@ -137,8 +205,8 @@ async def update(
     responses={
         status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
     },
-    summary="Delete a Program",
-    description="Delete a Program",
+    summary="Delete a RadioProgram",
+    description="Delete a RadioProgram",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete(
@@ -149,18 +217,24 @@ async def delete(
     """Delete an existing Program.
 
     Args:
-        db (Session): A database session
-        program_id (uuid.UUID): The uuid of the program to delete
+        db: A database session.
+        program_id: The UUID of the RadioProgram to delete.
 
     Raises:
-        HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
+        HTTPException: HTTP_404_NOT_FOUND
+            If RadioProgram does not exist.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to delete RadioProgram from DB.
     """
-    db_program = radio_programs.get_by_program_id(db, program_id=program_id)
-
-    if db_program is None:
+    try:
+        RadioPrograms.remove(db=db, program_id=program_id)
+    except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Program not found",
+            detail="RadioProgram not found.",
         )
-
-    radio_programs.remove(db, id=db_program.id)
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete RadioProgram from the DB.",
+        )
