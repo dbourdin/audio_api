@@ -42,9 +42,10 @@ async def get(
         program_id: The uuid of the program to retrieve
 
     Raises:
-        HTTPException: HTTP_404_NOT_FOUND: If the radio program does not exist.
-        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR: If failed to retrieve
-            RadioProgram from the DB.
+        HTTPException: HTTP_404_NOT_FOUND
+            If the radio program does not exist.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to retrieve RadioProgram from the DB.
     """
     try:
         return RadioPrograms.get(db=db, program_id=program_id)
@@ -106,12 +107,13 @@ async def create(
     """Create a new program.
 
     Args:
-        db (Session): A database session
-        program_in (schemas.RadioProgramCreateIn): Input data
+        db: A database session
+        program_in: Input data
         program_file: MP3 file containing the radio program
 
     Raises:
-        HTTPException: HTTP_400_BAD_REQUEST: If failed to create radio program.
+        HTTPException: HTTP_400_BAD_REQUEST
+            If failed to create radio program.
     """
     try:
         return RadioPrograms.create(
@@ -147,11 +149,12 @@ async def update(
         program_in: The new data.
 
     Raises:
-        HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
-        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR: If failed to store
-            RadioProgram on DB.
-        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR: If failed to upload
-            RadioProgram file to S3.
+        HTTPException: HTTP_404_NOT_FOUND
+            If the program does not exist.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to store RadioProgram on DB.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to upload RadioProgram file to S3.
     """
     try:
         return RadioPrograms.update(
@@ -191,11 +194,12 @@ async def delete(
     """Delete an existing Program.
 
     Args:
-        db (Session): A database session
-        program_id (uuid.UUID): The uuid of the program to delete
+        db: A database session
+        program_id: The uuid of the program to delete
 
     Raises:
-        HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
+        HTTPException: HTTP_404_NOT_FOUND
+            If the program does not exist.
     """
     db_program = radio_programs_repository.get_by_program_id(db, program_id=program_id)
 
