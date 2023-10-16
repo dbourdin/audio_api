@@ -154,3 +154,26 @@ class RadioPrograms:
             cls._delete_file_from_s3_by_url(program_url=db_program.url)
 
         return updated_program
+
+    @classmethod
+    def remove(
+        cls,
+        *,
+        db: Session,
+        program_id: uuid.UUID,
+    ) -> RadioProgram:
+        """Remove an existing RadioProgram and S3 file if exists.
+
+        Args:
+            db: A database session.
+            program_id: of the RadioProgram to be removed.
+
+        Returns:
+            RadioProgram: The removed RadioProgram.
+        """
+        existing_program = cls.repository.get_by_program_id(program_id=program_id)
+        deleted_program = cls.repository.remove(db=db, id=existing_program.id)
+        if existing_program.url:
+            cls._delete_file_from_s3_by_url(existing_program.url)
+
+        return deleted_program
