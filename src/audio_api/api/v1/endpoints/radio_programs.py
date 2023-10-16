@@ -38,19 +38,26 @@ async def get(
     """Retrieve an existing Program.
 
     Args:
-        db (Session): A database session
-        program_id (uuid.UUID): The uuid of the program to retrieve
+        db: A database session
+        program_id: The uuid of the program to retrieve
 
     Raises:
         HTTPException: HTTP_404_NOT_FOUND: If the radio program does not exist.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR: If failed to retrieve
+            RadioProgram from the DB.
     """
-    db_program = RadioPrograms.get(db=db, program_id=program_id)
-    if db_program is None:
+    try:
+        return RadioPrograms.get(db=db, program_id=program_id)
+    except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Radio program not found",
+            detail="RadioProgram not found",
         )
-    return db_program
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve RadioProgram from the DB.",
+        )
 
 
 @router.get(
@@ -125,9 +132,9 @@ async def update(
     """Update an existing Program.
 
     Args:
-        db (Session): A database session
-        program_id (uuid.UUID): The uuid of the program to modify
-        program_in (schemas.RadioProgramUpdateIn): The new data
+        db: A database session.
+        program_id: The uuid of the program to modify.
+        program_in: The new data.
 
     Raises:
         HTTPException: HTTP_404_NOT_FOUND: If the program does not exist.
@@ -143,7 +150,7 @@ async def update(
     except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Radio Program not found.",
+            detail="RadioProgram not found.",
         )
     except RadioProgramDatabaseError:
         raise HTTPException(
