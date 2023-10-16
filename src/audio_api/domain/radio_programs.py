@@ -98,7 +98,7 @@ class RadioPrograms:
         # TODO: Extract audio length
         radio_program_db = RadioProgramCreateDB(**radio_program.dict(), url=url)
         try:
-            new_program = cls.repository.create(db, obj_in=radio_program_db)
+            new_program = cls.repository.create(db, radio_program=radio_program_db)
         except RadioProgramDatabaseError as e:
             if radio_program_db.url:
                 cls._delete_file_from_s3_by_url(program_url=radio_program_db.url)
