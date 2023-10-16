@@ -1,5 +1,5 @@
 """RadioPrograms interface to handle use cases."""
-
+import uuid
 from typing import BinaryIO
 
 from sqlalchemy.orm import Session
@@ -16,6 +16,24 @@ class RadioPrograms:
 
     repository = radio_programs_repository
     program_file_persistence = ProgramFilePersistence
+
+    @classmethod
+    def get(
+        cls,
+        *,
+        db: Session,
+        program_id: uuid.UUID,
+    ) -> RadioProgram:
+        """Get a RadioProgram by program_id from DB.
+
+        Args:
+            db (Session): A database session.
+            program_id: program_id of the RadioProgram to retrieve.
+
+        Returns:
+            RadioProgram: Model containing stored data.
+        """
+        return cls.repository.get_by_program_id(db=db, program_id=program_id)
 
     @classmethod
     def create(

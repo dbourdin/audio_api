@@ -39,7 +39,7 @@ async def get(
     Raises:
         HTTPException: HTTP_404_NOT_FOUND: If the radio program does not exist.
     """
-    db_program = radio_programs_repository.get_by_program_id(db, program_id=program_id)
+    db_program = RadioPrograms.get(db=db, program_id=program_id)
     if db_program is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
