@@ -172,7 +172,9 @@ class RadioPrograms:
         Returns:
             RadioProgram: The removed RadioProgram.
         """
-        existing_program = cls.repository.get_by_program_id(program_id=program_id)
+        existing_program = cls.repository.get_by_program_id(
+            db=db, program_id=program_id
+        )
         deleted_program = cls.repository.remove(db=db, id=existing_program.id)
         if existing_program.url:
             cls._delete_file_from_s3_by_url(existing_program.url)
