@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from audio_api import schemas
 from audio_api.api import deps
 from audio_api.domain.radio_programs import RadioPrograms
-from audio_api.persistence.repositories import radio_programs_repository
 from audio_api.persistence.repositories.radio_program import (
     RadioProgramAlreadyExistsError,
     RadioProgramDatabaseError,
@@ -27,8 +26,8 @@ router = APIRouter()
     responses={
         status.HTTP_404_NOT_FOUND: {"model": schemas.RadioProgramGet},
     },
-    summary="Retrieve a single Program by UUID",
-    description="Retrieve single a Program by UUID",
+    summary="Retrieve a single RadioProgram by UUID",
+    description="Retrieve single a RadioProgram by UUID",
 )
 async def get(
     *,
@@ -38,12 +37,12 @@ async def get(
     """Retrieve an existing Program.
 
     Args:
-        db: A database session
-        program_id: The uuid of the program to retrieve
+        db: A database session.
+        program_id: The UUID of the RadioProgram to retrieve.
 
     Raises:
         HTTPException: HTTP_404_NOT_FOUND
-            If the radio program does not exist.
+            If RadioProgram does not exist.
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to retrieve RadioProgram from the DB.
     """
@@ -52,7 +51,7 @@ async def get(
     except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="RadioProgram not found",
+            detail="RadioProgram not found.",
         )
     except RadioProgramDatabaseError:
         raise HTTPException(
@@ -64,13 +63,13 @@ async def get(
 @router.get(
     "",
     response_model=list[schemas.RadioProgramList],
-    summary="List Programs",
-    description="Get a list of Programs",
+    summary="List RadioProgram",
+    description="Get a list of RadioProgram",
 )
 def get_all(
     db: Session = Depends(deps.get_db),
 ) -> Any:
-    """Retrieve many programs.
+    """Retrieve all RadioProgram.
 
     Args:
         db: A database session
@@ -93,8 +92,8 @@ def get_all(
     response_model=schemas.RadioProgramCreateOut,
     status_code=status.HTTP_201_CREATED,
     responses={status.HTTP_400_BAD_REQUEST: {"model": schemas.APIMessage}},
-    summary="Create a Program",
-    description="Create a Program",
+    summary="Create a RadioProgram",
+    description="Create a RadioProgram",
 )
 async def create(
     *,
@@ -104,12 +103,12 @@ async def create(
     ),
     program_file: UploadFile = File(...),
 ) -> Any:
-    """Create a new program.
+    """Create a new RadioProgram.
 
     Args:
-        db: A database session
-        program_in: Input data
-        program_file: MP3 file containing the radio program
+        db: A database session.
+        program_in: New RadioProgram.
+        program_file: RadioProgram MP3 file.
 
     Raises:
         HTTPException: HTTP_400_BAD_REQUEST
@@ -146,8 +145,8 @@ async def create(
     responses={
         status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
     },
-    summary="Edit a Program",
-    description="Edit a Program",
+    summary="Edit a RadioProgram",
+    description="Edit a RadioProgram",
 )
 async def update(
     *,
@@ -155,16 +154,16 @@ async def update(
     program_id: uuid.UUID,
     program_in: schemas.RadioProgramUpdateIn,
 ) -> Any:
-    """Update an existing Program.
+    """Update an existing RadioProgram.
 
     Args:
         db: A database session.
-        program_id: The uuid of the program to modify.
-        program_in: The new data.
+        program_id: The UUID of the RadioProgram to modify.
+        program_in: The RadioProgram.
 
     Raises:
         HTTPException: HTTP_404_NOT_FOUND
-            If the program does not exist.
+            If RadioProgram does not exist.
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to store RadioProgram on DB.
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
@@ -196,8 +195,8 @@ async def update(
     responses={
         status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
     },
-    summary="Delete a Program",
-    description="Delete a Program",
+    summary="Delete a RadioProgram",
+    description="Delete a RadioProgram",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete(
@@ -208,19 +207,24 @@ async def delete(
     """Delete an existing Program.
 
     Args:
-        db: A database session
-        program_id: The uuid of the program to delete
+        db: A database session.
+        program_id: The UUID of the RadioProgram to delete.
 
     Raises:
         HTTPException: HTTP_404_NOT_FOUND
-            If the program does not exist.
+            If RadioProgram does not exist.
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to delete RadioProgram from DB.
     """
-    db_program = radio_programs_repository.get_by_program_id(db, program_id=program_id)
-
-    if db_program is None:
+    try:
+        RadioPrograms.remove(db=db, program_id=program_id)
+    except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Program not found",
+            detail="RadioProgram not found.",
         )
-
-    radio_programs_repository.remove(db, id=db_program.id)
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete RadioProgram from the DB.",
+        )
