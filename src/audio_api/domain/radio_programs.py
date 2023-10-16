@@ -22,6 +22,22 @@ class RadioPrograms:
     program_file_persistence = ProgramFilePersistence
 
     @classmethod
+    def _delete_file_from_s3_by_url(cls, program_url: str):
+        """Delete a program file from S3 from a given url.
+
+        Args:
+            program_url: URL of the file to be deleted.
+        """
+        try:
+            # Remove uploaded file in s3
+            cls.program_file_persistence.delete_program_by_url(url=program_url)
+        except RadioProgramS3Error:
+            pass
+            # TODO: Should we care if we failed to delete?
+            # TODO: Run a monthly job to cleanup orphan programs?
+            # This could potentially remove new uploaded programs during cleanup
+
+    @classmethod
     def get(
         cls,
         *,
@@ -70,16 +86,26 @@ class RadioPrograms:
             radio_program: Input data.
             program_file: MP3 file containing the radio program.
 
+        Raises:
+            RadioProgramDatabaseError: If failed to store new RadioProgram in DB.
+
         Returns:
             RadioProgram: Model containing stored data.
         """
         url = cls.program_file_persistence.persist_program(
             radio_program=radio_program, program_file=program_file
         )
-        # TODO: Delete element from S3 if failed to store on DB.
         # TODO: Extract audio length
         radio_program_db = RadioProgramCreateDB(**radio_program.dict(), url=url)
-        return cls.repository.create(db, obj_in=radio_program_db)
+        try:
+            new_program = cls.repository.create(db, obj_in=radio_program_db)
+        except RadioProgramDatabaseError as e:
+            if radio_program_db.url:
+                cls._delete_file_from_s3_by_url(program_url=radio_program_db.url)
+
+            raise e
+
+        return new_program
 
     @classmethod
     def update(
@@ -120,26 +146,11 @@ class RadioPrograms:
             )
         except RadioProgramDatabaseError as e:
             if update_program.url:
-                try:
-                    # Remove uploaded file in s3
-                    cls.program_file_persistence.delete_program_by_url(
-                        update_program.url
-                    )
-                except RadioProgramS3Error:
-                    pass
-                    # TODO: Should we care if we failed to delete?
-                    # TODO: Run a monthly job to cleanup orphan programs?
-                    # This could potentially remove new uploaded programs during cleanup
+                cls._delete_file_from_s3_by_url(program_url=update_program.url)
+
             raise e
 
         if updated_program.url and db_program.url:
-            try:
-                # Remove previous file in s3
-                cls.program_file_persistence.delete_program_by_url(db_program.url)
-            except RadioProgramS3Error:
-                pass
-                # TODO: Should we care if we failed to delete?
-                # TODO: Run a monthly job to cleanup orphan programs?
-                # This could potentially remove new uploaded programs during cleanup
+            cls._delete_file_from_s3_by_url(program_url=db_program.url)
 
         return updated_program
