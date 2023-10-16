@@ -72,9 +72,19 @@ def get_all(
     """Retrieve many programs.
 
     Args:
-        db (Session): A database session
+        db: A database session
+
+    Raises:
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to retrieve RadioPrograms.
     """
-    return RadioPrograms.get_all(db=db)
+    try:
+        return RadioPrograms.get_all(db=db)
+    except RadioProgramDatabaseError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve RadioPrograms from the DB.",
+        )
 
 
 @router.post(
