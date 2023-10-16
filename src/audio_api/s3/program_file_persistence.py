@@ -5,11 +5,15 @@ from typing import BinaryIO
 
 from botocore.response import StreamingBody
 
-from audio_api.s3.s3_connector import S3Connector
+from audio_api.s3.s3_connector import S3ClientError, S3Connector, S3PersistenceError
 from audio_api.schemas import RadioProgramCreateIn
 from audio_api.settings import get_settings
 
 settings = get_settings()
+
+
+class RadioProgramS3Error(Exception):
+    """RadioProgramS3Error class to handle S3 errors."""
 
 
 class ProgramFilePersistence:
@@ -27,17 +31,25 @@ class ProgramFilePersistence:
             radio_program: RadioProgram instance.
             program_file: RadioProgram file to be stored.
 
+        Raises:
+            RadioProgramS3Error: If failed to store file on RADIO_PROGRAMS_BUCKET.
+
         Returns:
             str: url containing the persisted file.
         """
         current_time = datetime.datetime.now()
         timestamp = current_time.strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"{timestamp}_{radio_program.title}.mp3"
-        return cls.s3_connector.store(object_key=file_name, object_data=program_file)
+        try:
+            return cls.s3_connector.store(
+                object_key=file_name, object_data=program_file
+            )
+        except (S3ClientError, S3PersistenceError) as e:
+            raise RadioProgramS3Error(f"Failed to store new RadioProgram on S3: {e}")
 
     @classmethod
     def read_program(cls, file_name: str) -> StreamingBody:
-        """Read an object persisted in RADIO_PROGRAMS_BUCKET by file_name.
+        """Read a RadioProgram from RADIO_PROGRAMS_BUCKET by file_name.
 
         Args:
             file_name: File to be read.
@@ -49,9 +61,28 @@ class ProgramFilePersistence:
 
     @classmethod
     def delete_program(cls, file_name: str):
-        """Delete an object persisted in RADIO_PROGRAMS_BUCKET by file_name.
+        """Delete a RadioProgram in RADIO_PROGRAMS_BUCKET by file_name.
 
         Args:
             file_name: File to be deleted.
+
+        Raises:
+            RadioProgramS3Error: If failed to remove file from S3.
         """
-        cls.s3_connector.delete_object(object_key=file_name)
+        try:
+            cls.s3_connector.delete_object(object_key=file_name)
+        except (S3ClientError, S3PersistenceError) as e:
+            raise RadioProgramS3Error(
+                f"Failed to delete {file_name} RadioProgram file from S3: {e}"
+            )
+
+    # TODO: Store file_name in metadata and remove this method
+    @classmethod
+    def delete_program_by_url(cls, url: str):
+        """Delete a RadioProgram in RADIO_PROGRAMS_BUCKET by url.
+
+        Args:
+            url: URL to the file to be deleted.
+        """
+        file_name = url.split("/")[-1]
+        cls.delete_program(file_name=file_name)
