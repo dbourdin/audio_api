@@ -38,6 +38,7 @@ class RadioPrograms:
         url = cls.program_file_persistence.persist_program(
             radio_program=radio_program, program_file=program_file
         )
+        # TODO: Delete element from S3 if failed to store on DB.
         # TODO: Extract audio length
         radio_program_db = RadioProgramCreateDB(**radio_program.dict(), url=url)
         return cls.repository.create(db, obj_in=radio_program_db)
