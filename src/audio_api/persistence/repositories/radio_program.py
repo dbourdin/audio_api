@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from sqlalchemy.exc import DatabaseError
+from sqlalchemy.exc import DatabaseError, IntegrityError
 from sqlalchemy.orm import Session
 
 from audio_api.persistence.models.radio_program import RadioProgram
@@ -16,6 +16,10 @@ class RadioProgramDatabaseError(Exception):
 
 class RadioProgramNotFoundError(Exception):
     """RadioProgramNotFoundError class."""
+
+
+class RadioProgramAlreadyExistsError(Exception):
+    """RadioProgramAlreadyExistsError class."""
 
 
 class RadioProgramRepository(
@@ -45,6 +49,31 @@ class RadioProgramRepository(
             )
 
         return db_program
+
+    def create(
+        self, db: Session, *, radio_program: RadioProgramCreateDB
+    ) -> RadioProgram:
+        """Create a new RadioProgram.
+
+        Args:
+            db: A database session
+            radio_program: RadioProgram to be created.
+
+        Raises:
+            RadioProgramAlreadyExistsError: If failed to create a new RadioProgram.
+            RadioProgramDatabaseError: If failed to store new RadioProgram.
+
+        Returns:
+            RadioProgram: The created RadioProgram.
+        """
+        try:
+            return super().create(db=db, obj_in=radio_program)
+        except IntegrityError as e:
+            raise RadioProgramAlreadyExistsError(
+                f"Failed to create new RadioProgram: {e}"
+            )
+        except DatabaseError as e:
+            raise RadioProgramDatabaseError(f"Failed to create new RadioProgram: {e}")
 
     def update(
         self,
