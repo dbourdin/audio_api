@@ -65,7 +65,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
             "update_expression": update_expression,
         }
 
-    def get(self, id: UUID) -> ModelType | None:
+    def get(self, id: UUID) -> type[ModelType] | None:
         """Get a single DynamoDB record by id.
 
         Args:
@@ -83,7 +83,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
         if result_query:
             return self.model(**result_query[0])
 
-    def get_all(self) -> list[ModelType]:
+    def get_all(self) -> list[type[ModelType]]:
         """Get all DynamoDB records in the table.
 
         Returns:
@@ -91,7 +91,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
         """
         return [self.model(**item) for item in self.table.scan().get("Items", [])]
 
-    def create(self, item: CreateSchemaType) -> ModelType | None:
+    def create(self, item: CreateSchemaType) -> type[ModelType] | None:
         """Create a new item to DynamoDB table.
 
         Args:
@@ -107,7 +107,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
 
         return self.model(**item_dict)
 
-    def update(self, id: UUID, item: UpdateSchemaType):
+    def update(self, id: UUID, item: UpdateSchemaType) -> type[ModelType]:
         """Update an existing item in DynamoDB table.
 
         Args:
@@ -130,7 +130,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
 
         return self.model(**result["Attributes"])
 
-    def remove(self, id: UUID) -> ModelType:
+    def remove(self, id: UUID) -> type[ModelType]:
         """Delete an item from the DynamoDB table based on the provided id.
 
         Args:

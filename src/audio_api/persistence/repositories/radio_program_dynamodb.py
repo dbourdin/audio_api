@@ -2,13 +2,12 @@
 
 from uuid import UUID
 
-# TODO: Change to Schema
-from audio_api.persistence.models.radio_program import RadioProgram
 from audio_api.persistence.repositories.base_dynamodb_repository import (
     BaseDynamoDbRepository,
 )
 from audio_api.persistence.settings import DynamoDbTable
 from audio_api.schemas import RadioProgramCreateDB, RadioProgramUpdateDB
+from audio_api.schemas.radio_program_dynamo import RadioProgram
 
 
 class RadioProgramDatabaseError(Exception):
