@@ -20,8 +20,8 @@ class BaseRadioProgramSchema(APISchema):
     """Base RadioProgram API Model."""
 
 
-class RadioProgramDbSchema(BaseRadioProgramSchema):
-    """RadioProgramDbSchema class."""
+class RadioProgram(BaseRadioProgramSchema):
+    """RadioProgram schema class."""
 
     id: UUID | None
     title: str | None = Field(example="Shopping 2.0 #1")
