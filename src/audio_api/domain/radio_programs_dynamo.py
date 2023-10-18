@@ -159,7 +159,7 @@ class RadioPrograms:
         """
         existing_program = cls.repository.get(program_id=program_id)
         deleted_program = cls.repository.remove(program_id=program_id)
-        if existing_program.url:
+        if existing_program.radio_program:
             cls._delete_file_from_s3(file_name=existing_program.radio_program.file_name)
 
         return deleted_program
