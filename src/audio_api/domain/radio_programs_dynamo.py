@@ -132,9 +132,8 @@ class RadioPrograms:
         if db_program.radio_program:
             existing_file = db_program.radio_program.file_name
 
-        update_program = schemas.RadioProgramUpdateDB(
-            **db_program.dict(), **new_program.dict()
-        )
+        update_program = schemas.RadioProgramUpdateDB(**db_program.dict())
+        update_program = update_program.copy(update=new_program.dict(exclude_none=True))
 
         if program_file:
             # Will throw RadioProgramS3Error if fails to persist program.
