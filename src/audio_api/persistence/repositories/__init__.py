@@ -1,1 +1,1 @@
-from .radio_program import radio_programs_repository
+from .radio_program_dynamodb import radio_programs_repository
