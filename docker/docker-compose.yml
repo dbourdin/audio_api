@@ -30,33 +30,8 @@ services:
       - ../poetry.lock:/app/poetry.lock
     env_file:
       - ../config/api.env
-      - ../config/db.env
     depends_on:
-      - db
       - localstack
-
-  db:
-    image: postgres:16.0
-    # volumes:
-    # - app-db-data:/var/lib/postgresql/data/pgdata
-    ports:
-      - 5432:5432
-    env_file:
-      - ../config/db.env
-    environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-
-  pgadmin:
-    container_name: pgadmin
-    image: dpage/pgadmin4:7.7
-    environment:
-      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - 8001:80
-    depends_on:
-      - db
 
   localstack:
     image: localstack/localstack
