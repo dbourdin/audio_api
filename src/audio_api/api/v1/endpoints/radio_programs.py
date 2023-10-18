@@ -4,17 +4,15 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from sqlalchemy.orm import Session
 
 from audio_api import schemas
-from audio_api.api import deps
-from audio_api.domain.radio_programs import RadioPrograms
-from audio_api.persistence.repositories.radio_program import (
+from audio_api.aws.dynamodb.radio_programs import (
     RadioProgramAlreadyExistsError,
     RadioProgramDatabaseError,
     RadioProgramNotFoundError,
 )
-from audio_api.s3.program_file_persistence import RadioProgramS3Error
+from audio_api.aws.s3.program_file_persistence import RadioProgramS3Error
+from audio_api.domain.radio_programs import RadioPrograms
 from audio_api.schemas.utils import as_form
 
 router = APIRouter()
@@ -31,13 +29,11 @@ router = APIRouter()
 )
 async def get(
     *,
-    db: Session = Depends(deps.get_db),
     program_id: uuid.UUID,
 ) -> Any:
     """Retrieve an existing Program.
 
     Args:
-        db: A database session.
         program_id: The UUID of the RadioProgram to retrieve.
 
     Raises:
@@ -47,7 +43,7 @@ async def get(
             If failed to retrieve RadioProgram from the DB.
     """
     try:
-        return RadioPrograms.get(db=db, program_id=program_id)
+        return RadioPrograms.get(program_id=program_id)
     except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -66,20 +62,15 @@ async def get(
     summary="List RadioProgram",
     description="Get a list of RadioProgram",
 )
-def get_all(
-    db: Session = Depends(deps.get_db),
-) -> Any:
+def get_all() -> Any:
     """Retrieve all RadioProgram.
-
-    Args:
-        db: A database session
 
     Raises:
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to retrieve RadioPrograms.
     """
     try:
-        return RadioPrograms.get_all(db=db)
+        return RadioPrograms.get_all()
     except RadioProgramDatabaseError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -97,7 +88,6 @@ def get_all(
 )
 async def create(
     *,
-    db: Session = Depends(deps.get_db),
     program_in: schemas.RadioProgramCreateIn = Depends(
         as_form(schemas.RadioProgramCreateIn)
     ),
@@ -106,7 +96,6 @@ async def create(
     """Create a new RadioProgram.
 
     Args:
-        db: A database session.
         program_in: New RadioProgram.
         program_file: RadioProgram MP3 file.
 
@@ -120,7 +109,7 @@ async def create(
     """
     try:
         return RadioPrograms.create(
-            db=db, radio_program=program_in, program_file=program_file.file
+            radio_program=program_in, program_file=program_file.file
         )
     except RadioProgramAlreadyExistsError:
         raise HTTPException(
@@ -150,7 +139,6 @@ async def create(
 )
 async def update(
     *,
-    db: Session = Depends(deps.get_db),
     program_id: uuid.UUID,
     program_in: schemas.RadioProgramUpdateIn = Depends(
         as_form(schemas.RadioProgramUpdateIn)
@@ -160,7 +148,6 @@ async def update(
     """Update an existing RadioProgram.
 
     Args:
-        db: A database session.
         program_id: The UUID of the RadioProgram to modify.
         program_in: The updated RadioProgram.
         program_file: RadioProgram MP3 file.
@@ -174,7 +161,6 @@ async def update(
             If failed to upload RadioProgram file to S3.
     """
     update_args = {
-        "db": db,
         "program_id": program_id,
         "new_program": program_in,
     }
@@ -211,13 +197,11 @@ async def update(
 )
 async def delete(
     *,
-    db: Session = Depends(deps.get_db),
     program_id: uuid.UUID,
 ):
     """Delete an existing Program.
 
     Args:
-        db: A database session.
         program_id: The UUID of the RadioProgram to delete.
 
     Raises:
@@ -227,7 +211,7 @@ async def delete(
             If failed to delete RadioProgram from DB.
     """
     try:
-        RadioPrograms.remove(db=db, program_id=program_id)
+        RadioPrograms.remove(program_id=program_id)
     except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

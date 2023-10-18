@@ -5,9 +5,9 @@ from typing import BinaryIO
 
 from botocore.response import StreamingBody
 
-from audio_api.s3.s3_connector import S3ClientError, S3Connector, S3PersistenceError
-from audio_api.schemas import RadioProgramCreateIn
-from audio_api.settings import get_settings
+from audio_api.aws.s3.s3_connector import S3ClientError, S3Connector, S3PersistenceError
+from audio_api.aws.settings import get_settings
+from audio_api.schemas import RadioProgramCreateIn, RadioProgramFileSchema
 
 settings = get_settings()
 
@@ -24,7 +24,7 @@ class ProgramFilePersistence:
     @classmethod
     def persist_program(
         cls, radio_program: RadioProgramCreateIn, program_file: BinaryIO
-    ) -> str:
+    ) -> RadioProgramFileSchema:
         """Persist a RadioProgram in RADIO_PROGRAMS_BUCKET.
 
         Args:
@@ -35,17 +35,20 @@ class ProgramFilePersistence:
             RadioProgramS3Error: If failed to store file on RADIO_PROGRAMS_BUCKET.
 
         Returns:
-            str: url containing the persisted file.
+            RadioProgramFileSchema: Model containing the uploaded file metadata.
         """
         current_time = datetime.datetime.now()
         timestamp = current_time.strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"{timestamp}_{radio_program.title}.mp3"
         try:
-            return cls.s3_connector.store(
+            s3_file = cls.s3_connector.store(
                 object_key=file_name, object_data=program_file
             )
         except (S3ClientError, S3PersistenceError) as e:
             raise RadioProgramS3Error(f"Failed to store new RadioProgram on S3: {e}")
+
+        # TODO: Extract audio length
+        return RadioProgramFileSchema(**s3_file.dict(), length=0)
 
     @classmethod
     def read_program(cls, file_name: str) -> StreamingBody:
@@ -86,3 +89,12 @@ class ProgramFilePersistence:
         """
         file_name = url.split("/")[-1]
         cls.delete_program(file_name=file_name)
+
+    @classmethod
+    def read_all(cls) -> list[str]:
+        """Get a list with all RadioPrograms created in RADIO_PROGRAMS_BUCKET.
+
+        Returns:
+            list[str]: List containing all files in RADIO_PROGRAMS_BUCKET.
+        """
+        return cls.s3_connector.list_all()
