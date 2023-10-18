@@ -46,7 +46,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
         # TODO: Bound table to Schema and get from there.
-        self.table = self.dynamo_resource.Table(table.value)
+        self.table = self.dynamo_resource.Table(table)
 
     @classmethod
     def _build_update_query_expression(cls, update_item: ModelType) -> dict:
