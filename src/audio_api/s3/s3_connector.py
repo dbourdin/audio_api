@@ -12,15 +12,18 @@ from audio_api.settings import EnvironmentEnum, get_settings
 settings = get_settings()
 
 
-def get_s3_client() -> BaseClient:
+def get_s3_client(endpoint_url: str) -> BaseClient:
     """Return an s3 client for the current AWS S3 configuration.
+
+    Args:
+        endpoint_url: Specify endpoint url.
 
     Returns:
         BaseClient: Boto3 client set up for S3.
     """
     return boto3.client(
         "s3",
-        endpoint_url=settings.S3_ENDPOINT_URL,
+        endpoint_url=endpoint_url,
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
     )
@@ -43,9 +46,9 @@ class S3Connector:
         Args:
             bucket_name (str): S3 bucket name to be used by the S3Connector.
         """
-        self.s3_client = get_s3_client()
         self.bucket_name = bucket_name
-        self.endpoint_url = settings.S3_ENDPOINT_URL
+        self.endpoint_url = settings.AWS_ENDPOINT_URL
+        self.s3_client = get_s3_client(self.endpoint_url)
 
     def _build_object_url(self, object_key: str) -> str:
         """Return the uploaded file URL.
