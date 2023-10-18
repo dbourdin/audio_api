@@ -32,13 +32,21 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
         """
         self.model = model
         self.dynamo_resource = boto3.resource(
-            AwsResource.DYNAMODB, endpoint_url=settings.ENDPOINT_URL
+            AwsResource.DYNAMODB,
+            endpoint_url=settings.AWS_ENDPOINT_URL,
+            region_name=settings.AWS_DEFAULT_REGION,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
         self.dynamo_client = boto3.client(
-            AwsResource.DYNAMODB, endpoint_url=settings.ENDPOINT_URL
+            AwsResource.DYNAMODB,
+            endpoint_url=settings.AWS_ENDPOINT_URL,
+            region_name=settings.AWS_DEFAULT_REGION,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
         # TODO: Bound table to Schema and get from there.
-        self.table = self.dynamo_resource.Table(table)
+        self.table = self.dynamo_resource.Table(table.value)
 
     @classmethod
     def _build_update_query_expression(cls, update_item: ModelType) -> dict:
