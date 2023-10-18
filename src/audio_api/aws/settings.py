@@ -20,7 +20,7 @@ class DynamoDbTable(str, Enum):
     RadioPrograms = "radio_programs"
 
 
-class AwsSettings(BaseSettings):
+class AwsSettings(EnvironmentSettings, BaseSettings):
     """AwsSettings class."""
 
     AWS_ENDPOINT_URL: str = None
@@ -30,7 +30,7 @@ class AwsSettings(BaseSettings):
     RADIO_PROGRAMS_BUCKET: str
 
 
-class Settings(EnvironmentSettings, AwsSettings):
+class Settings(AwsSettings):
     """AWS settings.
 
     Includes configuration tied specifically to this module.

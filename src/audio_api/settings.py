@@ -34,17 +34,17 @@ class EnvironmentSettings(BaseSettings):
     """
 
     ENVIRONMENT: EnvironmentEnum = EnvironmentEnum.production
+    LOGLEVEL: LoggingEnum = LoggingEnum.info
 
 
-class APISettings(BaseSettings):
+class APISettings(EnvironmentSettings):
     """Basic API settings.
 
-    Includes database configuration, environment, CORS and logging, among others.
+    Includes environment, CORS and logging, among others.
     """
 
+    # API version
     API_VERSION: str = __version__
-
-    LOGLEVEL: LoggingEnum = LoggingEnum.info
 
     # Settings related to running an ASGI app
     APP_MODULE: str = "audio_api.app:app"
@@ -67,7 +67,7 @@ class APISettings(BaseSettings):
         }
 
 
-class Settings(EnvironmentSettings, APISettings):
+class Settings(APISettings):
     """API settings.
 
     Includes configuration tied specifically to this API.
