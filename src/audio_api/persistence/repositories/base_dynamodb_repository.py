@@ -1,5 +1,5 @@
 """BaseBaseDynamoDbRepository class."""
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 from uuid import UUID, uuid4
 
 import boto3
@@ -50,7 +50,15 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
 
     @classmethod
     def _build_update_query_expression(cls, update_item: ModelType) -> dict:
-        update_item_dict = {k: v for k, v in update_item.dict().items() if v}
+        def _build_update_item_dict(item: BaseModel):
+            def _parse_value(val: Any):
+                if isinstance(val, dict):
+                    return {k: _parse_value(v) for k, v in val.items() if v}
+                return val
+
+            return _parse_value(item.dict())
+
+        update_item_dict = _build_update_item_dict(update_item)
         attributes = {
             param: {"name": f"#{param}", "value": value, "expression": f":{param}_"}
             for param, value in update_item_dict.items()
@@ -65,7 +73,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
         update_values = [
             f" {param['name']} = {param['expression']}" for param in attributes.values()
         ]
-        update_expression = "SET" + "", "".join(update_values)
+        update_expression = "SET" + ",".join(update_values)
 
         return {
             "attribute_names": attribute_names,
@@ -126,7 +134,6 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
             dict containing the updated solution.
         """
         update_query = self._build_update_query_expression(item)
-
         result = self.table.update_item(
             Key={"id": str(id)},
             ConditionExpression="attribute_exists(id)",
