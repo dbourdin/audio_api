@@ -60,7 +60,7 @@ class RadioPrograms:
         Returns:
             RadioProgram: Model containing stored data.
         """
-        return cls.repository.get(id=program_id)
+        return cls.repository.get(program_id=program_id)
 
     @classmethod
     def get_all(cls) -> list[RadioProgram]:
