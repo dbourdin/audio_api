@@ -64,8 +64,10 @@ services:
       - "127.0.0.1:4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     environment:
-      - SERVICES=s3
+      - SERVICES=s3,dynamodb
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - DATA_DIR=/tmp/localstack/data
+      - AWS_DEFAULT_REGION=us-east-2
     volumes:
-      - "./aws:/etc/localstack/init/ready.d"  # Create buckets script
+      - "./aws:/etc/localstack/init/ready.d"  # Create buckets and tables scripts
       - "/var/run/docker.sock:/var/run/docker.sock"
