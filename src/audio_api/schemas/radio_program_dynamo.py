@@ -46,8 +46,6 @@ class RadioProgramCreateIn(BaseRadioProgramSchema):
 class RadioProgramCreateDB(RadioProgram):
     """Model used to create a new record in a POST request."""
 
-    id: UUID
-
 
 class RadioProgramCreateOut(RadioProgramCreateDB):
     """Parameters returned in a POST request."""
