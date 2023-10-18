@@ -19,22 +19,6 @@ class RadioPrograms:
     program_file_persistence = ProgramFilePersistence
 
     @classmethod
-    def _delete_file_from_s3_by_url(cls, program_url: str):
-        """Delete a program file from S3 from a given url.
-
-        Args:
-            program_url: URL of the file to be deleted.
-        """
-        try:
-            # Remove uploaded file in s3
-            cls.program_file_persistence.delete_program_by_url(url=program_url)
-        except RadioProgramS3Error:
-            pass
-            # TODO: Should we care if we failed to delete?
-            # TODO: Run a monthly job to cleanup orphan programs?
-            # This could potentially remove new uploaded programs during cleanup
-
-    @classmethod
     def _delete_file_from_s3(cls, file_name: str):
         """Delete file from S3 by file_name.
 
