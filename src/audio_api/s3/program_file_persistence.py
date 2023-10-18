@@ -90,3 +90,12 @@ class ProgramFilePersistence:
         """
         file_name = url.split("/")[-1]
         cls.delete_program(file_name=file_name)
+
+    @classmethod
+    def read_all(cls) -> list[str]:
+        """Get a list with all RadioPrograms created in RADIO_PROGRAMS_BUCKET.
+
+        Returns:
+            list[str]: List containing all files in RADIO_PROGRAMS_BUCKET.
+        """
+        return cls.s3_connector.list_all()
