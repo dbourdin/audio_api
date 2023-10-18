@@ -138,7 +138,7 @@ class RadioPrograms:
         if program_file:
             # Will throw RadioProgramS3Error if fails to persist program.
             uploaded_file = cls.program_file_persistence.persist_program(
-                radio_program=new_program, program_file=program_file
+                radio_program=update_program, program_file=program_file
             )
             update_program.radio_program = uploaded_file
 
