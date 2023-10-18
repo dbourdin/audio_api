@@ -4,12 +4,14 @@ from typing import BinaryIO
 
 from audio_api import schemas
 from audio_api.persistence.repositories import radio_programs_repository
-from audio_api.persistence.repositories.radio_program import RadioProgramDatabaseError
+from audio_api.persistence.repositories.radio_program_dynamodb import (
+    RadioProgramDatabaseError,
+)
 from audio_api.s3.program_file_persistence import (
     ProgramFilePersistence,
     RadioProgramS3Error,
 )
-from audio_api.schemas.radio_program_dynamo import RadioProgram, RadioProgramCreateDB
+from audio_api.schemas import RadioProgram, RadioProgramCreateDB
 
 
 class RadioPrograms:

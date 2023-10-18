@@ -6,8 +6,7 @@ from audio_api.persistence.repositories.base_dynamodb_repository import (
     BaseDynamoDbRepository,
 )
 from audio_api.persistence.settings import DynamoDbTable
-from audio_api.schemas import RadioProgramCreateDB, RadioProgramUpdateDB
-from audio_api.schemas.radio_program_dynamo import RadioProgram
+from audio_api.schemas import RadioProgram, RadioProgramCreateDB, RadioProgramUpdateDB
 
 
 class RadioProgramDatabaseError(Exception):

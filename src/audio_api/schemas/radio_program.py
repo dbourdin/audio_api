@@ -1,23 +1,37 @@
 """RadioProgram Schemas."""
 
-from datetime import date, datetime
+from datetime import date
 from uuid import UUID
 
 from pydantic import Field
 
 from audio_api.schemas import APISchema
+from audio_api.schemas.s3_base_schema import S3BaseSchema
+
+
+class RadioProgramFileSchema(S3BaseSchema):
+    """RadioProgramFileSchema class."""
+
+    program_length: int | None
 
 
 class BaseRadioProgramSchema(APISchema):
     """Base RadioProgram API Model."""
 
 
-class BaseDbRadioProgramSchema(BaseRadioProgramSchema):
-    """Base RadioProgramSchema with DB created values."""
+class BaseRadioProgram(BaseRadioProgramSchema):
+    """BaseRadioProgram schema class."""
 
-    program_id: UUID
-    created_at: datetime
-    updated_at: datetime
+    title: str | None = Field(example="Shopping 2.0 #1")
+    description: str | None = Field(example="Pilot program")
+    air_date: date | None
+    radio_program: RadioProgramFileSchema | None
+
+
+class RadioProgram(BaseRadioProgram):
+    """RadioProgram schema class."""
+
+    id: UUID | None
 
 
 class RadioProgramCreateIn(BaseRadioProgramSchema):
@@ -26,7 +40,6 @@ class RadioProgramCreateIn(BaseRadioProgramSchema):
     title: str = Field(example="Shopping 2.0 #1")
     description: str | None = Field(example="Pilot program")
     air_date: date | None
-    length: int | None = Field(example=3600)
     spotify_playlist: str | None = Field(
         example=(
             "https://open.spotify.com/playlist/"
@@ -35,13 +48,11 @@ class RadioProgramCreateIn(BaseRadioProgramSchema):
     )
 
 
-class RadioProgramCreateDB(RadioProgramCreateIn):
+class RadioProgramCreateDB(BaseRadioProgram):
     """Model used to create a new record in a POST request."""
 
-    url: str | None
 
-
-class RadioProgramCreateOut(BaseDbRadioProgramSchema, RadioProgramCreateDB):
+class RadioProgramCreateOut(RadioProgram):
     """Parameters returned in a POST request."""
 
 
@@ -55,6 +66,8 @@ class RadioProgramList(RadioProgramCreateOut):
 
 class RadioProgramUpdateIn(RadioProgramCreateIn):
     """Parameters received in a PUT request."""
+
+    title: str | None = Field(example="Shopping 2.0 #1")
 
 
 class RadioProgramUpdateDB(RadioProgramCreateDB):
