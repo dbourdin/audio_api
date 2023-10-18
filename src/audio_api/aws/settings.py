@@ -4,6 +4,8 @@ from functools import lru_cache
 
 from pydantic import BaseSettings
 
+from audio_api.settings import EnvironmentSettings
+
 
 class AwsResource(str, Enum):
     """AwsResource Enum."""
@@ -18,8 +20,8 @@ class DynamoDbTable(str, Enum):
     RadioPrograms = "radio_programs"
 
 
-class PersistenceSettings(BaseSettings):
-    """DynamoDbSettings class."""
+class AwsSettings(BaseSettings):
+    """AwsSettings class."""
 
     AWS_ENDPOINT_URL: str = None
     AWS_ACCESS_KEY_ID: str
@@ -27,7 +29,14 @@ class PersistenceSettings(BaseSettings):
     AWS_DEFAULT_REGION: str
 
 
+class Settings(EnvironmentSettings, AwsSettings):
+    """AWS settings.
+
+    Includes configuration tied specifically to this module.
+    """
+
+
 @lru_cache(maxsize=1)
-def get_settings() -> PersistenceSettings:
-    """Get PersistenceSettings."""
-    return PersistenceSettings()
+def get_settings() -> Settings:
+    """Get Aws Settings."""
+    return Settings()

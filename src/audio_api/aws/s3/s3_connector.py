@@ -6,8 +6,9 @@ from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from botocore.response import StreamingBody
 
+from audio_api.aws.settings import get_settings
 from audio_api.schemas.s3_base_schema import S3BaseSchema
-from audio_api.settings import EnvironmentEnum, get_settings
+from audio_api.settings import EnvironmentEnum
 
 settings = get_settings()
 
