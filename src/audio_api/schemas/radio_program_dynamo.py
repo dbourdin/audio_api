@@ -19,14 +19,19 @@ class BaseRadioProgramSchema(APISchema):
     """Base RadioProgram API Model."""
 
 
-class RadioProgram(BaseRadioProgramSchema):
-    """RadioProgram schema class."""
+class BaseRadioProgram(BaseRadioProgramSchema):
+    """BaseRadioProgram schema class."""
 
-    id: UUID | None
     title: str | None = Field(example="Shopping 2.0 #1")
     description: str | None = Field(example="Pilot program")
     air_date: date | None
     radio_program: RadioProgramFileSchema | None
+
+
+class RadioProgram(BaseRadioProgram):
+    """RadioProgram schema class."""
+
+    id: UUID | None
 
 
 class RadioProgramCreateIn(BaseRadioProgramSchema):
@@ -43,11 +48,11 @@ class RadioProgramCreateIn(BaseRadioProgramSchema):
     )
 
 
-class RadioProgramCreateDB(RadioProgram):
+class RadioProgramCreateDB(BaseRadioProgram):
     """Model used to create a new record in a POST request."""
 
 
-class RadioProgramCreateOut(RadioProgramCreateDB):
+class RadioProgramCreateOut(RadioProgram):
     """Parameters returned in a POST request."""
 
 
