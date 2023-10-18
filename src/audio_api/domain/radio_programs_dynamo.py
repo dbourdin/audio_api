@@ -94,7 +94,7 @@ class RadioPrograms:
             radio_program=radio_program, program_file=program_file
         )
         radio_program_db = RadioProgramCreateDB(
-            **radio_program.dict(), program_file=uploaded_file
+            **radio_program.dict(), radio_program=uploaded_file
         )
         try:
             new_program = cls.repository.create(radio_program=radio_program_db)
