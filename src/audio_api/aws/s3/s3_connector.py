@@ -154,4 +154,4 @@ class S3Connector:
             list[str]: List containing all files in S3 bucket.
         """
         files = self.s3_client.list_objects_v2(Bucket=self.bucket_name)
-        return [obj["Key"] for obj in files["Contents"]]
+        return [obj["Key"] for obj in files.get("Contents", [])]

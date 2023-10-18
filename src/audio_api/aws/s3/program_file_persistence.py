@@ -6,8 +6,8 @@ from typing import BinaryIO
 from botocore.response import StreamingBody
 
 from audio_api.aws.s3.s3_connector import S3ClientError, S3Connector, S3PersistenceError
+from audio_api.aws.settings import get_settings
 from audio_api.schemas import RadioProgramCreateIn, RadioProgramFileSchema
-from audio_api.settings import get_settings
 
 settings = get_settings()
 

@@ -27,6 +27,7 @@ class AwsSettings(BaseSettings):
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str
     AWS_DEFAULT_REGION: str
+    RADIO_PROGRAMS_BUCKET: str
 
 
 class Settings(EnvironmentSettings, AwsSettings):
