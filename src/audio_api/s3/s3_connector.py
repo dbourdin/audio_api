@@ -145,3 +145,12 @@ class S3Connector:
             raise S3PersistenceError(
                 f"Object deletion was not successful. Status - {status}"
             )
+
+    def list_all(self) -> list[str]:
+        """Get a list with all items created in S3 Bucket.
+
+        Returns:
+            list[str]: List containing all files in S3 bucket.
+        """
+        files = self.s3_client.list_objects_v2(Bucket=self.bucket_name)
+        return [obj["Key"] for obj in files["Contents"]]
