@@ -6,13 +6,12 @@ from uuid import UUID
 from pydantic import Field
 
 from audio_api.schemas import APISchema
+from audio_api.schemas.s3_base_schema import S3BaseSchema
 
 
-class RadioProgramFileSchema(APISchema):
+class RadioProgramFileSchema(S3BaseSchema):
     """RadioProgramFileSchema class."""
 
-    file_name: str | None
-    file_url: str | None
     program_length: int | None
 
 
@@ -27,7 +26,6 @@ class RadioProgram(BaseRadioProgramSchema):
     title: str | None = Field(example="Shopping 2.0 #1")
     description: str | None = Field(example="Pilot program")
     air_date: date | None
-    length: int | None = Field(example=3600)
     radio_program: RadioProgramFileSchema | None
 
 
@@ -37,7 +35,6 @@ class RadioProgramCreateIn(BaseRadioProgramSchema):
     title: str = Field(example="Shopping 2.0 #1")
     description: str | None = Field(example="Pilot program")
     air_date: date | None
-    length: int | None = Field(example=3600)
     spotify_playlist: str | None = Field(
         example=(
             "https://open.spotify.com/playlist/"
@@ -46,11 +43,10 @@ class RadioProgramCreateIn(BaseRadioProgramSchema):
     )
 
 
-class RadioProgramCreateDB(RadioProgramCreateIn):
+class RadioProgramCreateDB(RadioProgram):
     """Model used to create a new record in a POST request."""
 
     id: UUID
-    radio_program: RadioProgramFileSchema | None
 
 
 class RadioProgramCreateOut(RadioProgramCreateDB):
@@ -67,6 +63,8 @@ class RadioProgramList(RadioProgramCreateOut):
 
 class RadioProgramUpdateIn(RadioProgramCreateIn):
     """Parameters received in a PUT request."""
+
+    title: str | None = Field(example="Shopping 2.0 #1")
 
 
 class RadioProgramUpdateDB(RadioProgramCreateDB):
