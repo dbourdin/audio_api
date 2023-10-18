@@ -6,13 +6,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from audio_api import schemas
-from audio_api.domain.radio_programs import RadioPrograms
-from audio_api.persistence.repositories.radio_program_dynamodb import (
+from audio_api.aws.dynamodb.radio_programs import (
     RadioProgramAlreadyExistsError,
     RadioProgramDatabaseError,
     RadioProgramNotFoundError,
 )
-from audio_api.s3.program_file_persistence import RadioProgramS3Error
+from audio_api.aws.s3.program_file_persistence import RadioProgramS3Error
+from audio_api.domain.radio_programs import RadioPrograms
 from audio_api.schemas.utils import as_form
 
 router = APIRouter()

@@ -6,7 +6,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from pydantic import BaseModel
 
-from audio_api.persistence.settings import AwsResource, DynamoDbTable, get_settings
+from audio_api.aws.settings import AwsResource, DynamoDbTable, get_settings
 
 settings = get_settings()
 

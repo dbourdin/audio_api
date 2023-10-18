@@ -3,11 +3,9 @@ import uuid
 from typing import BinaryIO
 
 from audio_api import schemas
-from audio_api.persistence.repositories import radio_programs_repository
-from audio_api.persistence.repositories.radio_program_dynamodb import (
-    RadioProgramDatabaseError,
-)
-from audio_api.s3.program_file_persistence import (
+from audio_api.aws.dynamodb import radio_programs_repository
+from audio_api.aws.dynamodb.radio_programs import RadioProgramDatabaseError
+from audio_api.aws.s3.program_file_persistence import (
     ProgramFilePersistence,
     RadioProgramS3Error,
 )
