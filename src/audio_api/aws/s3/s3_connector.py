@@ -13,7 +13,7 @@ from audio_api.settings import EnvironmentEnum
 settings = get_settings()
 
 
-def get_s3_client(endpoint_url: str) -> BaseClient:
+def get_s3_client(endpoint_url: str = settings.AWS_ENDPOINT_URL) -> BaseClient:
     """Return an s3 client for the current AWS S3 configuration.
 
     Args:
@@ -27,6 +27,7 @@ def get_s3_client(endpoint_url: str) -> BaseClient:
         endpoint_url=endpoint_url,
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_DEFAULT_REGION,
     )
 
 
