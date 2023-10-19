@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 import boto3
 from boto3.dynamodb.conditions import Key
+from botocore.client import BaseClient
 from pydantic import BaseModel
 
 from audio_api.aws.settings import AwsResource, DynamoDbTables, get_settings
@@ -31,22 +32,32 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
             table: A DynamoDB table
         """
         self.model = model
-        self.dynamo_resource = boto3.resource(
-            AwsResource.DYNAMODB,
-            endpoint_url=settings.AWS_ENDPOINT_URL,
-            region_name=settings.AWS_DEFAULT_REGION,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        )
-        self.dynamo_client = boto3.client(
-            AwsResource.DYNAMODB,
-            endpoint_url=settings.AWS_ENDPOINT_URL,
-            region_name=settings.AWS_DEFAULT_REGION,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        )
+        self.dynamodb_client = self.get_dynamodb_client()
+        self.dynamodb_resource = self.get_dynamodb_resource()
         # TODO: Bound table to Schema and get from there.
-        self.table = self.dynamo_resource.Table(table)
+        self.table = self.dynamodb_resource.Table(table)
+
+    @classmethod
+    def get_dynamodb_client(cls) -> BaseClient:
+        """Return a DynamoDB Client configured with boto3."""
+        return boto3.client(
+            AwsResource.DYNAMODB,
+            endpoint_url=settings.AWS_ENDPOINT_URL,
+            region_name=settings.AWS_DEFAULT_REGION,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        )
+
+    @classmethod
+    def get_dynamodb_resource(cls):
+        """Return a DynamoDB Resource configured with boto3."""
+        return boto3.resource(
+            AwsResource.DYNAMODB,
+            endpoint_url=settings.AWS_ENDPOINT_URL,
+            region_name=settings.AWS_DEFAULT_REGION,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        )
 
     @classmethod
     def _build_update_query_expression(cls, update_item: ModelType) -> dict:
