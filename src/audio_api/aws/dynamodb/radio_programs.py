@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from audio_api.aws.dynamodb.base_repository import BaseDynamoDbRepository
-from audio_api.aws.settings import DynamoDbTable
+from audio_api.aws.settings import DynamoDbTables
 from audio_api.schemas import RadioProgram, RadioProgramCreateDB, RadioProgramUpdateDB
 
 
@@ -107,5 +107,5 @@ class RadioProgramRepository(
 
 
 radio_programs_repository = RadioProgramRepository(
-    RadioProgram, DynamoDbTable.RadioPrograms
+    RadioProgram, DynamoDbTables.RadioPrograms
 )

@@ -6,7 +6,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from pydantic import BaseModel
 
-from audio_api.aws.settings import AwsResource, DynamoDbTable, get_settings
+from audio_api.aws.settings import AwsResource, DynamoDbTables, get_settings
 
 settings = get_settings()
 
@@ -22,7 +22,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
     def __init__(
         self,
         model: type[ModelType],
-        table: DynamoDbTable,
+        table: DynamoDbTables,
     ):
         """Repository with default methods to Create, Read, Update, Delete (CRUD).
 
