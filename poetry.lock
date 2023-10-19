@@ -262,6 +262,20 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
+name = "deprecation"
+version = "2.1.0"
+description = "A library to handle automated deprecations"
+optional = false
+python-versions = "*"
+files = [
+    {file = "deprecation-2.1.0-py2.py3-none-any.whl", hash = "sha256:a10811591210e1fb0e768a8c25517cabeabcba6f0bf96564f8ff45189f90b14a"},
+    {file = "deprecation-2.1.0.tar.gz", hash = "sha256:72b3bde64e5d778694b0cf68178aed03d15e15477116add3fb773e581f9518ff"},
+]
+
+[package.dependencies]
+packaging = "*"
+
+[[package]]
 name = "docker"
 version = "6.1.3"
 description = "A Python library for the Docker Engine API."
@@ -900,6 +914,39 @@ anyio = ">=3.4.0,<5"
 full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyaml"]
 
 [[package]]
+name = "testcontainers"
+version = "3.7.1"
+description = "Library provides lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "testcontainers-3.7.1-py2.py3-none-any.whl", hash = "sha256:7f48cef4bf0ccd78f1a4534d4b701a003a3bace851f24eae58a32f9e3f0aeba0"},
+]
+
+[package.dependencies]
+deprecation = "*"
+docker = ">=4.0.0"
+wrapt = "*"
+
+[package.extras]
+arangodb = ["python-arango"]
+azurite = ["azure-storage-blob"]
+clickhouse = ["clickhouse-driver"]
+docker-compose = ["docker-compose"]
+google-cloud-pubsub = ["google-cloud-pubsub (<2)"]
+kafka = ["kafka-python"]
+keycloak = ["python-keycloak"]
+mongo = ["pymongo"]
+mssqlserver = ["pymssql"]
+mysql = ["pymysql", "sqlalchemy"]
+neo4j = ["neo4j"]
+oracle = ["cx-Oracle", "sqlalchemy"]
+postgresql = ["psycopg2-binary", "sqlalchemy"]
+rabbitmq = ["pika"]
+redis = ["redis"]
+selenium = ["selenium"]
+
+[[package]]
 name = "testcontainers-core"
 version = "0.0.1rc1"
 description = "Core component of testcontainers-python."
@@ -1330,4 +1377,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "34dc8e103a68fa846ef258f6f1057412044e0690f14412be1632c99666a08105"
+content-hash = "87a71132acbc19e778228056cc2c69a0568693637ffc5ae73ad75a345d48cca1"

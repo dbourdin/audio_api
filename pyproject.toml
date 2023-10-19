@@ -18,6 +18,7 @@ pytest-cov = "^4.1.0"
 typer = "^0.9.0"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
 testcontainers-localstack = "^0.0.1rc1"
+testcontainers = "^3.7.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
