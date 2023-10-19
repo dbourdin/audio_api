@@ -14,10 +14,16 @@ class AwsResource(str, Enum):
     S3 = "s3"
 
 
-class DynamoDbTable(str, Enum):
+class DynamoDbTables(str, Enum):
     """DynamoDbTable Enum."""
 
     RadioPrograms = "radio_programs"
+
+
+class S3Buckets(str, Enum):
+    """S3Buckets Enum."""
+
+    RadioPrograms = "radio-programs"
 
 
 class AwsSettings(EnvironmentSettings, BaseSettings):
