@@ -19,10 +19,10 @@ class RadioProgramAlreadyExistsError(Exception):
     """RadioProgramAlreadyExistsError class."""
 
 
-class RadioProgramRepository(
+class RadioProgramsRepository(
     BaseDynamoDbRepository[RadioProgram, RadioProgramCreateDB, RadioProgramUpdateDB]
 ):
-    """RadioProgramRepository to handle DB persistence."""
+    """RadioProgramsRepository to handle DB persistence."""
 
     def get(self, program_id: UUID) -> RadioProgram:
         """Get a RadioProgram program by program_id.
@@ -106,6 +106,6 @@ class RadioProgramRepository(
             )
 
 
-radio_programs_repository = RadioProgramRepository(
+radio_programs_repository = RadioProgramsRepository(
     RadioProgram, DynamoDbTables.RadioPrograms
 )
