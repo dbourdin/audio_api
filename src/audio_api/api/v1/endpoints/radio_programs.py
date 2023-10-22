@@ -11,7 +11,7 @@ from audio_api.aws.dynamodb.radio_programs import (
     RadioProgramDatabaseError,
     RadioProgramNotFoundError,
 )
-from audio_api.aws.s3.program_file_persistence import RadioProgramS3Error
+from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.domain.radio_programs import RadioPrograms
 from audio_api.schemas.utils import as_form
 
@@ -21,11 +21,13 @@ router = APIRouter()
 @router.get(
     "/{program_id}",
     response_model=schemas.RadioProgramGet,
-    responses={
-        status.HTTP_404_NOT_FOUND: {"model": schemas.RadioProgramGet},
-    },
     summary="Retrieve a single RadioProgram by UUID",
     description="Retrieve single a RadioProgram by UUID",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": schemas.RadioProgramGet},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.RadioProgramGet},
+    },
 )
 async def get(
     *,
@@ -61,6 +63,10 @@ async def get(
     response_model=list[schemas.RadioProgramList],
     summary="List RadioProgram",
     description="Get a list of RadioProgram",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.APIMessage},
+    },
 )
 def get_all() -> Any:
     """Retrieve all RadioProgram.
@@ -81,10 +87,13 @@ def get_all() -> Any:
 @router.post(
     "",
     response_model=schemas.RadioProgramCreateOut,
-    status_code=status.HTTP_201_CREATED,
-    responses={status.HTTP_400_BAD_REQUEST: {"model": schemas.APIMessage}},
     summary="Create a RadioProgram",
     description="Create a RadioProgram",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": schemas.APIMessage},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.APIMessage},
+    },
 )
 async def create(
     *,
@@ -105,6 +114,8 @@ async def create(
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to store RadioProgram on DB.
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to connect to S3.
+        HTTPException: HTTP_400_BAD_REQUEST
             If failed to upload RadioProgram file to S3.
     """
     try:
@@ -121,9 +132,14 @@ async def create(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to store RadioProgram in the DB.",
         )
-    except RadioProgramS3Error:
+    except S3ClientError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to connect to S3.",
+        )
+    except S3PersistenceError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to upload RadioProgram file to S3.",
         )
 
@@ -131,11 +147,14 @@ async def create(
 @router.put(
     "/{program_id}",
     response_model=schemas.RadioProgramUpdateOut,
-    responses={
-        status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
-    },
     summary="Edit a RadioProgram",
     description="Edit a RadioProgram",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.APIMessage},
+        status.HTTP_400_BAD_REQUEST: {"model": schemas.APIMessage},
+    },
 )
 async def update(
     *,
@@ -158,6 +177,8 @@ async def update(
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to store RadioProgram on DB.
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
+            If failed to connect to S3.
+        HTTPException: HTTP_400_BAD_REQUEST
             If failed to upload RadioProgram file to S3.
     """
     update_args = {
@@ -179,21 +200,27 @@ async def update(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to store RadioProgram in the DB.",
         )
-    except RadioProgramS3Error:
+    except S3ClientError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to connect to S3.",
+        )
+    except S3PersistenceError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to upload RadioProgram file to S3.",
         )
 
 
 @router.delete(
     "/{program_id}",
-    responses={
-        status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
-    },
     summary="Delete a RadioProgram",
     description="Delete a RadioProgram",
     status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.APIMessage},
+    },
 )
 async def delete(
     *,

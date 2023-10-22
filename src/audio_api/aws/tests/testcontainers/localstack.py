@@ -6,7 +6,7 @@ from testcontainers.localstack import LocalStackContainer as LocalStackContainer
 
 from audio_api.aws.dynamodb.base_repository import BaseDynamoDbRepository
 from audio_api.aws.dynamodb.tables import dynamodb_tables
-from audio_api.aws.s3.s3_connector import get_s3_client
+from audio_api.aws.s3.repositories.base_repository import BaseS3Repository
 from audio_api.aws.settings import AwsResources, S3Buckets, get_settings
 
 settings = get_settings()
@@ -16,7 +16,7 @@ localstack_port = urlparse(settings.AWS_ENDPOINT_URL).port
 class LocalStackContainer(LocalStackContainer_):
     """LocalStackContainer implementation class."""
 
-    s3_client = get_s3_client()
+    s3_client = BaseS3Repository.get_s3_client()
     dynamodb_client = BaseDynamoDbRepository.get_dynamodb_client()
 
     def _create_buckets(self):
