@@ -5,18 +5,17 @@ from typing import BinaryIO
 from audio_api import schemas
 from audio_api.aws.dynamodb import radio_programs_repository
 from audio_api.aws.dynamodb.radio_programs import RadioProgramDatabaseError
-from audio_api.aws.s3.program_file_persistence import (
-    ProgramFilePersistence,
-    RadioProgramS3Error,
-)
+from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
+from audio_api.aws.s3.repositories import radio_program_files_repository
+from audio_api.aws.s3.schemas import RadioProgramFileCreate
 from audio_api.schemas import RadioProgram, RadioProgramCreateDB
 
 
 class RadioPrograms:
     """RadioPrograms class used to create, read, update and delete radio programs."""
 
-    repository = radio_programs_repository
-    program_file_persistence = ProgramFilePersistence
+    radio_programs_repository = radio_programs_repository
+    radio_program_files_repository = radio_program_files_repository
 
     @classmethod
     def _delete_file_from_s3(cls, file_name: str):
@@ -27,8 +26,8 @@ class RadioPrograms:
         """
         try:
             # Remove uploaded file in s3
-            cls.program_file_persistence.delete_program(file_name=file_name)
-        except RadioProgramS3Error:
+            cls.radio_program_files_repository.delete_object(object_key=file_name)
+        except (S3ClientError, S3PersistenceError):
             pass
             # TODO: Should we care if we failed to delete?
             # TODO: Run a monthly job to cleanup orphan programs?
@@ -44,7 +43,7 @@ class RadioPrograms:
         Returns:
             RadioProgram: Model containing stored data.
         """
-        return cls.repository.get(program_id=program_id)
+        return cls.radio_programs_repository.get(program_id=program_id)
 
     @classmethod
     def get_all(cls) -> list[RadioProgram]:
@@ -53,7 +52,7 @@ class RadioPrograms:
         Returns:
             list[RadioProgram]: List containing all stored RadioPrograms.
         """
-        return cls.repository.get_all()
+        return cls.radio_programs_repository.get_all()
 
     @classmethod
     def create(
@@ -74,14 +73,16 @@ class RadioPrograms:
         Returns:
             RadioProgram: Model containing stored data.
         """
-        uploaded_file = cls.program_file_persistence.persist_program(
-            radio_program=radio_program, program_file=program_file
+        uploaded_file = cls.radio_program_files_repository.store(
+            RadioProgramFileCreate(file_name=radio_program.title, file=program_file)
         )
         radio_program_db = RadioProgramCreateDB(
             **radio_program.dict(), radio_program=uploaded_file
         )
         try:
-            new_program = cls.repository.create(radio_program=radio_program_db)
+            new_program = cls.radio_programs_repository.create(
+                radio_program=radio_program_db
+            )
         except RadioProgramDatabaseError as e:
             if uploaded_file.file_url:
                 cls._delete_file_from_s3(file_name=uploaded_file.file_name)
@@ -121,8 +122,10 @@ class RadioPrograms:
 
         if program_file:
             # Will throw RadioProgramS3Error if fails to persist program.
-            uploaded_file = cls.program_file_persistence.persist_program(
-                radio_program=update_program, program_file=program_file
+            uploaded_file = cls.radio_program_files_repository.store(
+                RadioProgramFileCreate(
+                    file_name=update_program.title, file=program_file
+                )
             )
             update_program.radio_program = uploaded_file
 
@@ -157,8 +160,8 @@ class RadioPrograms:
         Returns:
             RadioProgram: The removed RadioProgram.
         """
-        existing_program = cls.repository.get(program_id=program_id)
-        deleted_program = cls.repository.remove(program_id=program_id)
+        existing_program = cls.get(program_id=program_id)
+        deleted_program = cls.radio_programs_repository.remove(program_id=program_id)
         if existing_program.radio_program:
             cls._delete_file_from_s3(file_name=existing_program.radio_program.file_name)
 
