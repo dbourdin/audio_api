@@ -1,7 +1,11 @@
 """RadioProgramFile Schemas."""
 
-from audio_api.aws.s3.schemas import S3FileSchema
+from audio_api.aws.s3.schemas import S3CreateSchema, S3FileSchema
 
 
 class RadioProgramFile(S3FileSchema):
-    """RadioProgramFileSchema class."""
+    """RadioProgramFile class."""
+
+
+class RadioProgramFileCreate(S3CreateSchema):
+    """RadioProgramFileCreate class."""
