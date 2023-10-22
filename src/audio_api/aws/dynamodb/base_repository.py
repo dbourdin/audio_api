@@ -1,4 +1,4 @@
-"""BaseBaseDynamoDbRepository class."""
+"""BaseDynamoDbRepository class."""
 from typing import Any, Generic, TypeVar
 from uuid import UUID, uuid4
 
@@ -28,8 +28,8 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
         """Repository with default methods to Create, Read, Update, Delete (CRUD).
 
         Args:
-            model: A pydantic BaseModel class
-            table: A DynamoDB table
+            model: A pydantic BaseModel class.
+            table: A DynamoDB table.
         """
         self.model = model
         self.dynamodb_client = self.get_dynamodb_client()
@@ -96,10 +96,10 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
         """Get a single DynamoDB record by id.
 
         Args:
-            id: The id to retrieve
+            id: The id to retrieve.
 
         Returns:
-            Optional[ModelType]: The retrieved record
+            Optional[ModelType]: The retrieved record.
         """
         key_condition = Key("id").eq(str(id))
 
@@ -138,8 +138,8 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
         """Update an existing item in DynamoDB table.
 
         Args:
-            id: Item id to be updated
-            item: Model containing updated data
+            id: Item id to be updated.
+            item: Model containing updated data.
 
         Returns:
             dict containing the updated solution.
