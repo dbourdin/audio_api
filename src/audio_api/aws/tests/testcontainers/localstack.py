@@ -7,7 +7,7 @@ from testcontainers.localstack import LocalStackContainer as LocalStackContainer
 from audio_api.aws.dynamodb.base_repository import BaseDynamoDbRepository
 from audio_api.aws.dynamodb.tables import dynamodb_tables
 from audio_api.aws.s3.s3_connector import get_s3_client
-from audio_api.aws.settings import AwsResource, S3Buckets, get_settings
+from audio_api.aws.settings import AwsResources, S3Buckets, get_settings
 
 settings = get_settings()
 localstack_port = urlparse(settings.AWS_ENDPOINT_URL).port
@@ -65,4 +65,4 @@ class LocalStackContainer(LocalStackContainer_):
 
 localstack_container = LocalStackContainer(image="localstack/localstack:2.3.2")
 localstack_container.with_bind_ports(localstack_port, localstack_port)
-localstack_container.with_services(AwsResource.S3, AwsResource.DYNAMODB)
+localstack_container.with_services(AwsResources.S3, AwsResources.DYNAMODB)

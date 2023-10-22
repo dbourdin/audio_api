@@ -7,7 +7,7 @@ from boto3.dynamodb.conditions import Key
 from botocore.client import BaseClient
 from pydantic import BaseModel
 
-from audio_api.aws.settings import AwsResource, DynamoDbTables, get_settings
+from audio_api.aws.settings import AwsResources, DynamoDbTables, get_settings
 
 settings = get_settings()
 
@@ -41,7 +41,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
     def get_dynamodb_client(cls) -> BaseClient:
         """Return a DynamoDB Client configured with boto3."""
         return boto3.client(
-            AwsResource.DYNAMODB,
+            AwsResources.DYNAMODB,
             endpoint_url=settings.AWS_ENDPOINT_URL,
             region_name=settings.AWS_DEFAULT_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -52,7 +52,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
     def get_dynamodb_resource(cls):
         """Return a DynamoDB Resource configured with boto3."""
         return boto3.resource(
-            AwsResource.DYNAMODB,
+            AwsResources.DYNAMODB,
             endpoint_url=settings.AWS_ENDPOINT_URL,
             region_name=settings.AWS_DEFAULT_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
