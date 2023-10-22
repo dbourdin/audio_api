@@ -1,4 +1,5 @@
 """BaseS3Repository class to write and read files from S3."""
+from datetime import datetime
 from typing import Generic, TypeVar
 
 import boto3
@@ -84,6 +85,10 @@ class BaseS3Repository(Generic[ModelType, CreateSchemaType]):
         Returns:
             ModelType: Object containing file_name and file_url.
         """
+        current_time = datetime.now()
+        timestamp = current_time.strftime("%Y-%m-%d_%H-%M-%S")
+        # TODO: Make filename url friendly.
+        item.file_name = f"{timestamp}_{item.file_name}.mp3"
         try:
             response = self.s3_client.put_object(
                 Bucket=self.bucket, Key=item.file_name, Body=item.file
@@ -127,6 +132,26 @@ class BaseS3Repository(Generic[ModelType, CreateSchemaType]):
 
         return response.get("Body")
 
+    def list_all(self) -> list[type[ModelType]]:
+        """Get a list with all items created in S3 Bucket.
+
+        Raises:
+            S3ClientError: If failed to receive response from S3
+
+        Returns:
+            list[type[ModelType]]: List containing all files in S3 bucket.
+        """
+        try:
+            files = self.s3_client.list_objects_v2(Bucket=self.bucket)
+        except ClientError as e:
+            raise S3ClientError(f"Failed to get response from S3: {e}")
+        return [
+            self.model(
+                file_name=obj["Key"], file_url=self._build_object_url(obj["Key"])
+            )
+            for obj in files.get("Contents", [])
+        ]
+
     def delete_object(self, object_key: str):
         """Delete an object from the S3 bucket.
 
@@ -149,16 +174,11 @@ class BaseS3Repository(Generic[ModelType, CreateSchemaType]):
                 f"Object deletion was not successful. Status - {status}"
             )
 
-    def list_all(self) -> list[type[ModelType]]:
-        """Get a list with all items created in S3 Bucket.
+    def delete_file_by_url(self, url: str):
+        """Delete a file in S3 by url.
 
-        Returns:
-            list[type[ModelType]]: List containing all files in S3 bucket.
+        Args:
+            url: URL to the file to be deleted.
         """
-        files = self.s3_client.list_objects_v2(Bucket=self.bucket)
-        return [
-            self.model(
-                file_name=obj["Key"], file_url=self._build_object_url(obj["Key"])
-            )
-            for obj in files.get("Contents", [])
-        ]
+        file_name = url.split("/")[-1]
+        self.delete_object(object_key=file_name)
