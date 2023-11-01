@@ -19,7 +19,13 @@ class BaseRadioProgramModel(BaseModel):
     title: str = Field(example="Shopping 2.0 #1")
     description: str | None = Field(example="Pilot program")
     air_date: date | None
-    radio_program: RadioProgramFileModel | None
+    spotify_playlist: str | None = Field(
+        example=(
+            "https://open.spotify.com/playlist/"
+            "37i9dQZF1DWSDoVybeQisg?si=e15a3a65324a4628"
+        )
+    )
+    # TODO: radio_program: RadioProgramFileModel | None
 
 
 class RadioProgramModel(BaseRadioProgramModel):
