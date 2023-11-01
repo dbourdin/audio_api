@@ -9,18 +9,24 @@ from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from audio_api.aws.dynamodb.exceptions import DynamoDbError
-from audio_api.aws.dynamodb.schemas.base_schema import DynamoDbItemBaseSchema
+from audio_api.aws.dynamodb.schemas.base_schema import (
+    DynamoDbItemBaseSchema,
+    DynamoDbPutItemSchema,
+    DynamoDbUpdateItemSchema,
+)
 from audio_api.aws.settings import AwsResources, DynamoDbTables, get_settings
 
 settings = get_settings()
 
 
 ModelType = TypeVar("ModelType", bound=DynamoDbItemBaseSchema)
-CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
-UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
+PutItemSchemaType = TypeVar("PutItemSchemaType", bound=DynamoDbPutItemSchema)
+UpdateItemSchemaType = TypeVar("UpdateItemSchemaType", bound=DynamoDbUpdateItemSchema)
 
 
-class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+class BaseDynamoDbRepository(
+    Generic[ModelType, PutItemSchemaType, UpdateItemSchemaType]
+):
     """BaseBaseDynamoDbRepository class."""
 
     def __init__(
@@ -146,7 +152,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
 
         return items
 
-    def put_item(self, item: CreateSchemaType) -> type[ModelType] | None:
+    def put_item(self, item: PutItemSchemaType) -> type[ModelType] | None:
         """Create a new item to DynamoDB table.
 
         Args:
@@ -170,7 +176,7 @@ class BaseDynamoDbRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTy
         # TODO: Can model be read from response instead??
         return self.model(**item_dict)
 
-    def update_item(self, item_id: UUID, item: UpdateSchemaType) -> type[ModelType]:
+    def update_item(self, item_id: UUID, item: UpdateItemSchemaType) -> type[ModelType]:
         """Update an existing item in DynamoDB table.
 
         Args:
