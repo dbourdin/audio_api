@@ -1,6 +1,6 @@
 """RadioProgramFilesRepository class."""
 
-from audio_api.aws.s3.repositories.base_repository import BaseS3Repository
+from audio_api.aws.s3.repositories import BaseS3Repository
 from audio_api.aws.s3.schemas import RadioProgramFile, RadioProgramFileCreate
 
 

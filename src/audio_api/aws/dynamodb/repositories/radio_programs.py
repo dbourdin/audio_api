@@ -5,7 +5,7 @@ from audio_api.aws.dynamodb.models import (
     RadioProgramPutItemModel,
     RadioProgramUpdateItemModel,
 )
-from audio_api.aws.dynamodb.repositories.base_repository import BaseDynamoDbRepository
+from audio_api.aws.dynamodb.repositories import BaseDynamoDbRepository
 from audio_api.aws.settings import DynamoDbTables
 
 
