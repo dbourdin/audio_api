@@ -5,11 +5,11 @@ from typing import BinaryIO
 from audio_api import schemas
 from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
-from audio_api.aws.dynamodb.radio_programs import RadioProgramDatabaseError
 from audio_api.aws.dynamodb.repositories import radio_programs_repository
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.aws.s3.repositories import radio_program_files_repository
 from audio_api.aws.s3.schemas import RadioProgramFileCreate
+from audio_api.domain.exceptions import RadioProgramNotFoundError
 from audio_api.domain.models import RadioProgramModel
 from audio_api.schemas import RadioProgram
 
@@ -43,10 +43,19 @@ class RadioPrograms:
         Args:
             program_id: program_id of the RadioProgram to retrieve.
 
+        Raises:
+            RadioProgramNotFoundError: If the RadioProgram is not found.
+
         Returns:
             RadioProgramModel: Model containing stored data.
         """
-        return cls.radio_programs_repository.get_item(item_id=program_id)
+        radio_program = cls.radio_programs_repository.get_item(item_id=program_id)
+        if not radio_program:
+            raise RadioProgramNotFoundError(
+                f"RadioProgram with id {program_id} does not exist."
+            )
+
+        return radio_program
 
     @classmethod
     def get_all(cls) -> list[RadioProgramModel]:
@@ -108,7 +117,7 @@ class RadioPrograms:
             program_file: If there is a program file, it will be uploaded to S3.
 
         Raises:
-            RadioProgramDatabaseError: If failed to update RadioProgram in DB.
+            DynamoDbClientError: If failed to update RadioProgram in DB.
 
         Returns:
             RadioProgram: Model containing updated data.
@@ -134,7 +143,7 @@ class RadioPrograms:
             updated_program = radio_programs_repository.update(
                 program_id=program_id, updated_program=update_program
             )
-        except RadioProgramDatabaseError as e:
+        except DynamoDbClientError as e:
             if program_file:
                 cls._delete_file_from_s3(
                     file_name=update_program.radio_program.file_name
