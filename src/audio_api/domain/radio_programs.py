@@ -3,11 +3,12 @@ import uuid
 from typing import BinaryIO
 
 from audio_api import schemas
-from audio_api.aws.dynamodb import radio_programs_repository
 from audio_api.aws.dynamodb.radio_programs import RadioProgramDatabaseError
+from audio_api.aws.dynamodb.repositories import radio_programs_repository
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.aws.s3.repositories import radio_program_files_repository
 from audio_api.aws.s3.schemas import RadioProgramFileCreate
+from audio_api.domain.models import RadioProgramModel
 from audio_api.schemas import RadioProgram, RadioProgramCreateDB
 
 
@@ -34,25 +35,25 @@ class RadioPrograms:
             # This could potentially remove new uploaded programs during cleanup
 
     @classmethod
-    def get(cls, *, program_id: uuid.UUID) -> RadioProgram:
+    def get(cls, *, program_id: uuid.UUID) -> RadioProgramModel:
         """Get a RadioProgram by program_id from DB.
 
         Args:
             program_id: program_id of the RadioProgram to retrieve.
 
         Returns:
-            RadioProgram: Model containing stored data.
+            RadioProgramModel: Model containing stored data.
         """
-        return cls.radio_programs_repository.get(program_id=program_id)
+        return cls.radio_programs_repository.get_item(item_id=program_id)
 
     @classmethod
-    def get_all(cls) -> list[RadioProgram]:
+    def get_all(cls) -> list[RadioProgramModel]:
         """Get all RadioPrograms from DB.
 
         Returns:
-            list[RadioProgram]: List containing all stored RadioPrograms.
+            list[RadioProgramModel]: List containing all stored RadioPrograms.
         """
-        return cls.radio_programs_repository.get_all()
+        return cls.radio_programs_repository.get_items()
 
     @classmethod
     def create(
