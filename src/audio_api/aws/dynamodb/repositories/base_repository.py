@@ -108,8 +108,8 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             "update_expression": update_expression,
         }
 
-    def get(self, item_id: UUID) -> type[ModelType] | None:
-        """Get a single DynamoDB record by item_id.
+    def get_item(self, item_id: UUID) -> type[ModelType] | None:
+        """Get a single DynamoDB item by item_id.
 
         Args:
             item_id: The item_id to retrieve.
@@ -118,7 +118,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             DynamoDbError: If failed to get item from DynamoDB.
 
         Returns:
-            Optional[ModelType]: The retrieved record.
+            Optional[ModelType]: The retrieved item.
         """
         key_condition = Key("id").eq(str(item_id))
 
@@ -133,7 +133,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         if result_query:
             return self.model(**result_query[0])
 
-    def get_all(self) -> list[type[ModelType]]:
+    def get_items(self) -> list[type[ModelType]]:
         """Get all DynamoDB items in the table.
 
         Raises:
