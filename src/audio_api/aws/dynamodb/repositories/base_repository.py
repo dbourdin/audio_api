@@ -150,7 +150,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         return items
 
-    def put_item(self, item: PutItemModelType) -> type[ModelType] | None:
+    def put_item(self, item: PutItemModelType) -> type[ModelType]:
         """Create a new item to DynamoDB table.
 
         Args:
