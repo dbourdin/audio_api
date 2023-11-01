@@ -2,8 +2,8 @@
 
 from fastapi import FastAPI
 
-from audio_api.api.v1.routers import router
-from audio_api.schemas import ApiVersionModel
+from audio_api.api import router
+from audio_api.api.schemas import ApiVersionModel
 from audio_api.settings import EnvironmentEnum, Settings, get_settings
 
 settings = get_settings()
