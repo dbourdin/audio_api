@@ -179,7 +179,6 @@ async def update(
         HTTPException: HTTP_400_BAD_REQUEST
             If failed to upload RadioProgram file to S3.
     """
-    # TODO: Check if this is necessary, or I can just use program_file.file
     program_file = program_file.file if program_file else None
 
     try:

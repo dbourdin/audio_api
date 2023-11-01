@@ -25,7 +25,6 @@ class BaseRadioProgramModel(BaseModel):
             "37i9dQZF1DWSDoVybeQisg?si=e15a3a65324a4628"
         )
     )
-    # TODO: radio_program: RadioProgramFileModel | None
 
 
 class RadioProgramModel(BaseRadioProgramModel):
@@ -33,3 +32,4 @@ class RadioProgramModel(BaseRadioProgramModel):
 
     # TODO: This shouldn't be None
     id: UUID | None
+    radio_program: RadioProgramFileModel | None

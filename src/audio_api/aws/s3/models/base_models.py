@@ -1,5 +1,8 @@
 """S3BaseModel Models."""
-from pydantic import BaseModel
+from tempfile import SpooledTemporaryFile
+from typing import Any
+
+from pydantic import BaseModel, validator
 
 
 class S3BaseModel(BaseModel):
@@ -17,4 +20,13 @@ class S3FileModel(S3BaseModel):
 class S3CreateModel(S3BaseModel):
     """S3CreateModel class."""
 
-    file: bytes
+    file: Any
+
+    @validator("file")
+    def validate_file(cls, value):
+        """Validate that file is the required type."""
+        if not isinstance(value, SpooledTemporaryFile):
+            raise ValueError(
+                f"File must be a SpooledTemporaryFile, got {type(value)} instead."
+            )
+        return value
