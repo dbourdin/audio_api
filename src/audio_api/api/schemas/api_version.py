@@ -1,6 +1,6 @@
 """API Version information."""
 
-from audio_api.schemas import APISchema
+from audio_api.api.schemas import APISchema
 
 
 class ApiVersionModel(APISchema):

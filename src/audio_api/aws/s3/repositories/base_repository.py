@@ -13,18 +13,18 @@ from audio_api.aws.s3.exceptions import (
     S3ClientError,
     S3PersistenceError,
 )
-from audio_api.aws.s3.schemas import S3CreateSchema, S3FileSchema
+from audio_api.aws.s3.models import S3CreateModel, S3FileModel
 from audio_api.aws.settings import AwsResources, S3Buckets, get_settings
 from audio_api.settings import EnvironmentEnum
 
 settings = get_settings()
 
 
-ModelType = TypeVar("ModelType", bound=S3FileSchema)
-CreateSchemaType = TypeVar("CreateSchemaType", bound=S3CreateSchema)
+ModelType = TypeVar("ModelType", bound=S3FileModel)
+CreateModelType = TypeVar("CreateModelType", bound=S3CreateModel)
 
 
-class BaseS3Repository(Generic[ModelType, CreateSchemaType]):
+class BaseS3Repository(Generic[ModelType, CreateModelType]):
     """BaseS3Repository class."""
 
     def __init__(self, model: type[ModelType]):
@@ -72,7 +72,7 @@ class BaseS3Repository(Generic[ModelType, CreateSchemaType]):
             return f"{settings.AWS_ENDPOINT_URL}/{self.bucket}/{object_key}"
         return f"https://{self.bucket}.s3.amazonaws.com/{object_key}"
 
-    def store(self, item: CreateSchemaType) -> type[ModelType]:
+    def store(self, item: CreateModelType) -> type[ModelType]:
         """Upload an object to the S3 bucket.
 
         Args:

@@ -10,8 +10,8 @@ from audio_api.aws.dynamodb.models import (
 )
 from audio_api.aws.dynamodb.repositories import radio_programs_repository
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
+from audio_api.aws.s3.models import RadioProgramFileCreate
 from audio_api.aws.s3.repositories import radio_program_files_repository
-from audio_api.aws.s3.schemas import RadioProgramFileCreate
 from audio_api.domain.exceptions import RadioProgramNotFoundError
 from audio_api.domain.models import RadioProgramModel
 

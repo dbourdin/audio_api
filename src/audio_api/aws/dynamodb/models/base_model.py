@@ -11,4 +11,4 @@ class DynamoDbPutItemModel(BaseModel):
 
 
 class DynamoDbUpdateItemModel(BaseModel):
-    """DynamoDbUpdateItemSchema class."""
+    """DynamoDbUpdateItemModel class."""

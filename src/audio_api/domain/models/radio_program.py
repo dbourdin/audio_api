@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from audio_api.aws.s3.schemas import RadioProgramFile
+from audio_api.aws.s3.models import RadioProgramFile
 
 
 class RadioProgramFileModel(RadioProgramFile):
@@ -14,7 +14,7 @@ class RadioProgramFileModel(RadioProgramFile):
 
 
 class BaseRadioProgramModel(BaseModel):
-    """BaseRadioProgramModel schema class."""
+    """BaseRadioProgramModel class."""
 
     title: str = Field(example="Shopping 2.0 #1")
     description: str | None = Field(example="Pilot program")
