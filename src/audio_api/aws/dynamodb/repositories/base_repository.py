@@ -9,12 +9,13 @@ from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from audio_api.aws.dynamodb.exceptions import DynamoDbError
+from audio_api.aws.dynamodb.schemas.base_schema import DynamoDbItemBaseSchema
 from audio_api.aws.settings import AwsResources, DynamoDbTables, get_settings
 
 settings = get_settings()
 
 
-ModelType = TypeVar("ModelType", bound=BaseModel)
+ModelType = TypeVar("ModelType", bound=DynamoDbItemBaseSchema)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
