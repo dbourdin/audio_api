@@ -7,7 +7,7 @@ from pydantic import BaseSettings
 from audio_api.settings import EnvironmentSettings
 
 
-class AwsResource(str, Enum):
+class AwsResources(str, Enum):
     """AwsResource Enum."""
 
     DYNAMODB = "dynamodb"

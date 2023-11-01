@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from audio_api.api.v1.endpoints import radio_programs
+from audio_api.api.endpoints import radio_programs
 
 router = APIRouter()
 router.include_router(radio_programs.router, prefix="/programs", tags=["programs"])
