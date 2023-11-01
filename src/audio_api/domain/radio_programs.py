@@ -4,7 +4,10 @@ from typing import BinaryIO
 
 from audio_api import schemas
 from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
-from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
+from audio_api.aws.dynamodb.models import (
+    RadioProgramPutItemModel,
+    RadioProgramUpdateItemModel,
+)
 from audio_api.aws.dynamodb.repositories import radio_programs_repository
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.aws.s3.repositories import radio_program_files_repository
@@ -108,7 +111,7 @@ class RadioPrograms:
         program_id: uuid.UUID,
         new_program: schemas.RadioProgramUpdateIn,
         program_file: BinaryIO = None,
-    ) -> RadioProgram:
+    ) -> RadioProgramModel:
         """Update an existing RadioProgram with new properties and new file if included.
 
         Args:
@@ -120,14 +123,14 @@ class RadioPrograms:
             DynamoDbClientError: If failed to update RadioProgram in DB.
 
         Returns:
-            RadioProgram: Model containing updated data.
+            RadioProgramModel: Model containing updated data.
         """
         db_program = cls.get(program_id=program_id)
         existing_file = None
         if db_program.radio_program:
             existing_file = db_program.radio_program.file_name
 
-        update_program = schemas.RadioProgramUpdateDB(**db_program.dict())
+        update_program = RadioProgramUpdateItemModel(**db_program.dict())
         update_program = update_program.copy(update=new_program.dict(exclude_none=True))
 
         if program_file:
@@ -140,8 +143,8 @@ class RadioPrograms:
             update_program.radio_program = uploaded_file
 
         try:
-            updated_program = radio_programs_repository.update(
-                program_id=program_id, updated_program=update_program
+            updated_program = radio_programs_repository.update_item(
+                item_id=program_id, item=update_program
             )
         except DynamoDbClientError as e:
             if program_file:
