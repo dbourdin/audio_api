@@ -1,6 +1,4 @@
 """S3BaseModel Models."""
-from typing import BinaryIO
-
 from pydantic import BaseModel
 
 
@@ -19,4 +17,4 @@ class S3FileModel(S3BaseModel):
 class S3CreateModel(S3BaseModel):
     """S3CreateModel class."""
 
-    file: BinaryIO
+    file: bytes
