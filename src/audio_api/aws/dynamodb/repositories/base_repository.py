@@ -10,23 +10,21 @@ from pydantic import BaseModel
 
 from audio_api.aws.dynamodb.exceptions import DynamoDbError
 from audio_api.aws.dynamodb.schemas.base_schema import (
-    DynamoDbItemBaseSchema,
-    DynamoDbPutItemSchema,
-    DynamoDbUpdateItemSchema,
+    DynamoDbItemModel,
+    DynamoDbPutItemModel,
+    DynamoDbUpdateItemModel,
 )
 from audio_api.aws.settings import AwsResources, DynamoDbTables, get_settings
 
 settings = get_settings()
 
 
-ModelType = TypeVar("ModelType", bound=DynamoDbItemBaseSchema)
-PutItemSchemaType = TypeVar("PutItemSchemaType", bound=DynamoDbPutItemSchema)
-UpdateItemSchemaType = TypeVar("UpdateItemSchemaType", bound=DynamoDbUpdateItemSchema)
+ModelType = TypeVar("ModelType", bound=DynamoDbItemModel)
+PutItemModelType = TypeVar("PutItemModelType", bound=DynamoDbPutItemModel)
+UpdateItemModelType = TypeVar("UpdateItemModelType", bound=DynamoDbUpdateItemModel)
 
 
-class BaseDynamoDbRepository(
-    Generic[ModelType, PutItemSchemaType, UpdateItemSchemaType]
-):
+class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemModelType]):
     """BaseBaseDynamoDbRepository class."""
 
     def __init__(
@@ -37,13 +35,13 @@ class BaseDynamoDbRepository(
         """Repository with default methods to Create, Read, Update, Delete (CRUD).
 
         Args:
-            model: A pydantic BaseModel class.
+            model: A DynamoDbItemModel class.
             table: A DynamoDB table.
         """
         self.model = model
         self.dynamodb_client = self.get_dynamodb_client()
         self.dynamodb_resource = self.get_dynamodb_resource()
-        # TODO: Bound table to Schema and get from there.
+        # TODO: Bound table to Model and get from there.
         self.table = self.dynamodb_resource.Table(table)
 
     @classmethod
@@ -152,7 +150,7 @@ class BaseDynamoDbRepository(
 
         return items
 
-    def put_item(self, item: PutItemSchemaType) -> type[ModelType] | None:
+    def put_item(self, item: PutItemModelType) -> type[ModelType] | None:
         """Create a new item to DynamoDB table.
 
         Args:
@@ -176,7 +174,7 @@ class BaseDynamoDbRepository(
         # TODO: Can model be read from response instead??
         return self.model(**item_dict)
 
-    def update_item(self, item_id: UUID, item: UpdateItemSchemaType) -> type[ModelType]:
+    def update_item(self, item_id: UUID, item: UpdateItemModelType) -> type[ModelType]:
         """Update an existing item in DynamoDB table.
 
         Args:

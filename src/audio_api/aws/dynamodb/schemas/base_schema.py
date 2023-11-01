@@ -1,14 +1,14 @@
-"""DynamoDbItemBaseSchema class."""
-from audio_api.schemas import APISchema
+"""DynamoDbItemBaseModel classes."""
+from pydantic import BaseModel
 
 
-class DynamoDbItemBaseSchema(APISchema):
-    """DynamoDbItemBaseSchema class."""
+class DynamoDbItemModel(BaseModel):
+    """DynamoDbItemBaseModel class."""
 
 
-class DynamoDbPutItemSchema(DynamoDbItemBaseSchema):
-    """DynamoDbPutItemSchema class."""
+class DynamoDbPutItemModel(BaseModel):
+    """DynamoDbPutItemModel class."""
 
 
-class DynamoDbUpdateItemSchema(DynamoDbItemBaseSchema):
+class DynamoDbUpdateItemModel(BaseModel):
     """DynamoDbUpdateItemSchema class."""
