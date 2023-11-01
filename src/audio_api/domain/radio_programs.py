@@ -72,7 +72,6 @@ class RadioPrograms:
     def create(
         cls,
         *,
-        # TODO: MAYBE THIS COULD JUST BE BaseRadioProgramModel??
         radio_program: schemas.RadioProgramCreateIn,
         program_file: BinaryIO,
     ) -> RadioProgramModel:
