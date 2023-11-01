@@ -3,13 +3,15 @@ import uuid
 from typing import BinaryIO
 
 from audio_api import schemas
+from audio_api.aws.dynamodb.exceptions import DynamoDbError
+from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
 from audio_api.aws.dynamodb.radio_programs import RadioProgramDatabaseError
 from audio_api.aws.dynamodb.repositories import radio_programs_repository
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.aws.s3.repositories import radio_program_files_repository
 from audio_api.aws.s3.schemas import RadioProgramFileCreate
 from audio_api.domain.models import RadioProgramModel
-from audio_api.schemas import RadioProgram, RadioProgramCreateDB
+from audio_api.schemas import RadioProgram
 
 
 class RadioPrograms:
@@ -59,9 +61,10 @@ class RadioPrograms:
     def create(
         cls,
         *,
+        # TODO: MAYBE THIS COULD JUST BE BaseRadioProgramModel??
         radio_program: schemas.RadioProgramCreateIn,
         program_file: BinaryIO,
-    ) -> RadioProgram:
+    ) -> RadioProgramModel:
         """Create a new RadioProgram by uploading to s3 and storing metadata in DB.
 
         Args:
@@ -69,25 +72,22 @@ class RadioPrograms:
             program_file: MP3 file containing the radio program.
 
         Raises:
-            RadioProgramDatabaseError: If failed to store new RadioProgram in DB.
+            DynamoDbError: If failed to store new RadioProgram in DB.
 
         Returns:
-            RadioProgram: Model containing stored data.
+            RadioProgramModel: Model containing stored data.
         """
         uploaded_file = cls.radio_program_files_repository.store(
             RadioProgramFileCreate(file_name=radio_program.title, file=program_file)
         )
-        radio_program_db = RadioProgramCreateDB(
+        radio_program_db = RadioProgramPutItemModel(
             **radio_program.dict(), radio_program=uploaded_file
         )
         try:
-            new_program = cls.radio_programs_repository.create(
-                radio_program=radio_program_db
-            )
-        except RadioProgramDatabaseError as e:
+            new_program = cls.radio_programs_repository.put_item(item=radio_program_db)
+        except DynamoDbError as e:
             if uploaded_file.file_url:
                 cls._delete_file_from_s3(file_name=uploaded_file.file_name)
-
             raise e
 
         return new_program
