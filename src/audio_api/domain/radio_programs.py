@@ -14,7 +14,6 @@ from audio_api.aws.s3.repositories import radio_program_files_repository
 from audio_api.aws.s3.schemas import RadioProgramFileCreate
 from audio_api.domain.exceptions import RadioProgramNotFoundError
 from audio_api.domain.models import RadioProgramModel
-from audio_api.schemas import RadioProgram
 
 
 class RadioPrograms:
@@ -164,17 +163,17 @@ class RadioPrograms:
         cls,
         *,
         program_id: uuid.UUID,
-    ) -> RadioProgram:
+    ) -> RadioProgramModel:
         """Remove an existing RadioProgram and S3 file if exists.
 
         Args:
             program_id: of the RadioProgram to be removed.
 
         Returns:
-            RadioProgram: The removed RadioProgram.
+            RadioProgramModel: The removed RadioProgram.
         """
         existing_program = cls.get(program_id=program_id)
-        deleted_program = cls.radio_programs_repository.remove(program_id=program_id)
+        deleted_program = cls.radio_programs_repository.delete_item(item_id=program_id)
         if existing_program.radio_program:
             cls._delete_file_from_s3(file_name=existing_program.radio_program.file_name)
 
