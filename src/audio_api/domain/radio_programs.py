@@ -2,8 +2,7 @@
 import uuid
 from typing import BinaryIO
 
-from audio_api import schemas
-from audio_api.api.schemas import RadioProgramCreateInSchema
+from audio_api.api.schemas import RadioProgramCreateInSchema, RadioProgramUpdateInSchema
 from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.dynamodb.models import (
     RadioProgramPutItemModel,
@@ -108,7 +107,7 @@ class RadioPrograms:
         cls,
         *,
         program_id: uuid.UUID,
-        new_program: schemas.RadioProgramUpdateIn,
+        new_program: RadioProgramUpdateInSchema,
         program_file: BinaryIO = None,
     ) -> RadioProgramModel:
         """Update an existing RadioProgram with new properties and new file if included.

@@ -6,4 +6,6 @@ from audio_api.api.schemas.radio_program import (
     RadioProgramCreateOutSchema,
     RadioProgramGetSchema,
     RadioProgramListSchema,
+    RadioProgramUpdateInSchema,
+    RadioProgramUpdateOutSchema,
 )

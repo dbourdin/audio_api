@@ -5,18 +5,20 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
-from audio_api import schemas
 from audio_api.api.schemas import (
+    APIMessage,
     RadioProgramCreateInSchema,
     RadioProgramCreateOutSchema,
     RadioProgramGetSchema,
     RadioProgramListSchema,
+    RadioProgramUpdateInSchema,
+    RadioProgramUpdateOutSchema,
 )
+from audio_api.api.schemas.utils import as_form
 from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.domain.exceptions import RadioProgramNotFoundError
 from audio_api.domain.radio_programs import RadioPrograms
-from audio_api.schemas.utils import as_form
 
 router = APIRouter()
 
@@ -28,8 +30,8 @@ router = APIRouter()
     description="Retrieve single a RadioProgram by UUID",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_404_NOT_FOUND: {"model": schemas.RadioProgramGet},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.RadioProgramGet},
+        status.HTTP_404_NOT_FOUND: {"model": APIMessage},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": APIMessage},
     },
 )
 async def get(
@@ -68,7 +70,7 @@ async def get(
     description="Get a list of RadioPrograms",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.APIMessage},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": APIMessage},
     },
 )
 def get_all() -> Any:
@@ -94,8 +96,8 @@ def get_all() -> Any:
     description="Create a RadioProgram",
     status_code=status.HTTP_201_CREATED,
     responses={
-        status.HTTP_400_BAD_REQUEST: {"model": schemas.APIMessage},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.APIMessage},
+        status.HTTP_400_BAD_REQUEST: {"model": APIMessage},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": APIMessage},
     },
 )
 async def create(
@@ -142,21 +144,21 @@ async def create(
 
 @router.put(
     "/{program_id}",
-    response_model=schemas.RadioProgramUpdateOut,
+    response_model=RadioProgramUpdateOutSchema,
     summary="Edit a RadioProgram",
     description="Edit a RadioProgram",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.APIMessage},
-        status.HTTP_400_BAD_REQUEST: {"model": schemas.APIMessage},
+        status.HTTP_404_NOT_FOUND: {"model": APIMessage},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": APIMessage},
+        status.HTTP_400_BAD_REQUEST: {"model": APIMessage},
     },
 )
 async def update(
     *,
     program_id: uuid.UUID,
-    program_in: schemas.RadioProgramUpdateIn = Depends(
-        as_form(schemas.RadioProgramUpdateIn)
+    program_in: RadioProgramUpdateInSchema = Depends(
+        as_form(RadioProgramUpdateInSchema)
     ),
     program_file: UploadFile = File(None),
 ) -> Any:
@@ -177,15 +179,13 @@ async def update(
         HTTPException: HTTP_400_BAD_REQUEST
             If failed to upload RadioProgram file to S3.
     """
-    update_args = {
-        "program_id": program_id,
-        "new_program": program_in,
-    }
-    if program_file:
-        update_args["program_file"] = program_file.file
+    # TODO: Check if this is necessary, or I can just use program_file.file
+    program_file = program_file.file if program_file else None
 
     try:
-        return RadioPrograms.update(**update_args)
+        return RadioPrograms.update(
+            program_id=program_id, new_program=program_in, program_file=program_file
+        )
     except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -214,8 +214,8 @@ async def update(
     description="Delete a RadioProgram",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        status.HTTP_404_NOT_FOUND: {"model": schemas.APIMessage},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.APIMessage},
+        status.HTTP_404_NOT_FOUND: {"model": APIMessage},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": APIMessage},
     },
 )
 async def delete(
