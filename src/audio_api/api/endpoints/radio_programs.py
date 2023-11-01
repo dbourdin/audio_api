@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from audio_api import schemas
+from audio_api.api.schemas import RadioProgramGetSchema, RadioProgramListSchema
 from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.domain.exceptions import RadioProgramNotFoundError
@@ -17,7 +18,7 @@ router = APIRouter()
 
 @router.get(
     "/{program_id}",
-    response_model=schemas.RadioProgramGet,
+    response_model=RadioProgramGetSchema,
     summary="Retrieve a single RadioProgram by UUID",
     description="Retrieve single a RadioProgram by UUID",
     status_code=status.HTTP_200_OK,
@@ -57,9 +58,9 @@ async def get(
 
 @router.get(
     "",
-    response_model=list[schemas.RadioProgramList],
-    summary="List RadioProgram",
-    description="Get a list of RadioProgram",
+    response_model=list[RadioProgramListSchema],
+    summary="List RadioPrograms",
+    description="Get a list of RadioPrograms",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": schemas.APIMessage},
