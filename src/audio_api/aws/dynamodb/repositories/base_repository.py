@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from audio_api.aws.dynamodb.exceptions import DynamoDbError
-from audio_api.aws.dynamodb.schemas.base_schema import (
+from audio_api.aws.dynamodb.models import (
     DynamoDbItemModel,
     DynamoDbPutItemModel,
     DynamoDbUpdateItemModel,
