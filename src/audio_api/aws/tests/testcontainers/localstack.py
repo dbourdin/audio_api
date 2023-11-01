@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from testcontainers.localstack import LocalStackContainer as LocalStackContainer_
 
-from audio_api.aws.dynamodb.base_repository import BaseDynamoDbRepository
+from audio_api.aws.dynamodb.repositories.base_repository import BaseDynamoDbRepository
 from audio_api.aws.dynamodb.tables import dynamodb_tables
 from audio_api.aws.s3.repositories.base_repository import BaseS3Repository
 from audio_api.aws.settings import AwsResources, S3Buckets, get_settings

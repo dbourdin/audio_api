@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from audio_api.aws.dynamodb.base_repository import BaseDynamoDbRepository
+from audio_api.aws.dynamodb.repositories.base_repository import BaseDynamoDbRepository
 from audio_api.aws.settings import DynamoDbTables
 from audio_api.schemas import RadioProgram, RadioProgramCreateDB, RadioProgramUpdateDB
 
