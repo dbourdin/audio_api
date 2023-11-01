@@ -13,8 +13,8 @@ class RadioProgramFileModel(RadioProgramFile):
     program_length: int | None
 
 
-class BaseRadioProgramModel(BaseModel):
-    """BaseRadioProgramModel class."""
+class BaseRadioProgramSchema(BaseModel):
+    """BaseRadioProgramSchema class."""
 
     title: str = Field(example="Shopping 2.0 #1")
     description: str | None = Field(example="Pilot program")
@@ -25,6 +25,11 @@ class BaseRadioProgramModel(BaseModel):
             "37i9dQZF1DWSDoVybeQisg?si=e15a3a65324a4628"
         )
     )
+
+
+class BaseRadioProgramModel(BaseRadioProgramSchema):
+    """BaseRadioProgramModel class."""
+
     radio_program: RadioProgramFileModel
 
 

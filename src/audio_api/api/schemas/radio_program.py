@@ -2,10 +2,11 @@
 from pydantic import Field
 
 from audio_api.api.schemas import APISchema
-from audio_api.domain.models import BaseRadioProgramModel, RadioProgramModel
+from audio_api.domain.models import RadioProgramModel
+from audio_api.domain.models.radio_program import BaseRadioProgramSchema
 
 
-class BaseRadioProgramApiSchema(APISchema, BaseRadioProgramModel):
+class BaseRadioProgramApiSchema(APISchema, BaseRadioProgramSchema):
     """BaseRadioProgramApiSchema class."""
 
 
