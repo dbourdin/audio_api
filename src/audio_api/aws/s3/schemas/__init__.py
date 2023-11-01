@@ -1,4 +1,4 @@
-from audio_api.aws.s3.schemas.base_schema import (
+from audio_api.aws.s3.schemas.base_models import (
     S3BaseSchema,
     S3CreateSchema,
     S3FileSchema,

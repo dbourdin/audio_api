@@ -4,10 +4,10 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from audio_api.schemas.s3_base_schema import S3BaseSchema
+from audio_api.aws.s3.schemas import RadioProgramFile
 
 
-class RadioProgramFileModel(S3BaseSchema):
+class RadioProgramFileModel(RadioProgramFile):
     """RadioProgramFileModel class."""
 
     program_length: int | None
