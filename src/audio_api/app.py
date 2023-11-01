@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 
-from audio_api.api import router
+from audio_api.api.routers import router
 from audio_api.api.schemas import ApiVersionModel
 from audio_api.settings import EnvironmentEnum, Settings, get_settings
 
@@ -15,7 +15,7 @@ app = FastAPI(
     debug=settings.ENVIRONMENT == EnvironmentEnum.development,
     root_path=settings.ROOT_PATH,
 )
-app.include_router(router, prefix="/v1")
+app.include_router(router)
 
 
 @app.get("/version", tags=["version"], response_model=ApiVersionModel)
