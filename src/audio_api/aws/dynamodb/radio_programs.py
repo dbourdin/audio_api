@@ -11,6 +11,7 @@ class RadioProgramDatabaseError(Exception):
     """RadioProgramDatabaseError class to handle DB errors."""
 
 
+# TODO: This Exc goes in Domain
 class RadioProgramNotFoundError(Exception):
     """RadioProgramNotFoundError class."""
 
@@ -37,6 +38,8 @@ class RadioProgramsRepository(
             RadioProgram: The retrieved radio program.
         """
         db_program = super().get(id=program_id)
+
+        # TODO: THIS SHOULD BE IN DOMAIN
         if db_program is None:
             raise RadioProgramNotFoundError(
                 f"Couldn't find RadioProgram with id: {program_id}"
