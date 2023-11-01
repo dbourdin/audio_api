@@ -1,5 +1,5 @@
 """DynamoDB Exceptions."""
 
 
-class DynamoDbError(Exception):
-    """DynamoDbPutItemError class to handle DynamoDB errors."""
+class DynamoDbClientError(Exception):
+    """DynamoDbClientError class to handle DynamoDB errors."""

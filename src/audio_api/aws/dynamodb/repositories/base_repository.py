@@ -8,7 +8,7 @@ from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
-from audio_api.aws.dynamodb.exceptions import DynamoDbError
+from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.dynamodb.models import (
     DynamoDbItemModel,
     DynamoDbPutItemModel,
@@ -115,7 +115,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             item_id: The item_id to retrieve.
 
         Raises:
-            DynamoDbError: If failed to get item from DynamoDB.
+            DynamoDbClientError: If failed to get item from DynamoDB.
 
         Returns:
             Optional[ModelType]: The retrieved item.
@@ -128,7 +128,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             )["Items"]
         # TODO: Test this Exception!
         except ClientError as e:
-            raise DynamoDbError(f"Failed to get item from DynamoDB: {e}")
+            raise DynamoDbClientError(f"Failed to get item from DynamoDB: {e}")
 
         if result_query:
             return self.model(**result_query[0])
@@ -137,7 +137,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         """Get all DynamoDB items in the table.
 
         Raises:
-            DynamoDbError: If failed to get items from DynamoDB.
+            DynamoDbClientError: If failed to get items from DynamoDB.
 
         Returns:
             list[ModelType]: List containing all received items.
@@ -146,7 +146,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             items = [self.model(**item) for item in self.table.scan().get("Items", [])]
         # TODO: Test this Exception!
         except ClientError as e:
-            raise DynamoDbError(f"Failed to get items from DynamoDB: {e}")
+            raise DynamoDbClientError(f"Failed to get items from DynamoDB: {e}")
 
         return items
 
@@ -157,7 +157,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             item: Item to be inserted in DynamoDB table.
 
         Raises:
-            DynamoDbError: If failed to store new item in DynamoDB.
+            DynamoDbClientError: If failed to store new item in DynamoDB.
 
         Returns:
             ModelType: Retrieved item from DynamoDB.
@@ -169,7 +169,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             self.table.put_item(Item=item_dict)
         # TODO: Test this Exception!
         except ClientError as e:
-            raise DynamoDbError(f"Failed to store new item in DynamoDB: {e}")
+            raise DynamoDbClientError(f"Failed to store new item in DynamoDB: {e}")
 
         # TODO: Can model be read from response instead??
         return self.model(**item_dict)
@@ -182,7 +182,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             item: Model containing updated data.
 
         Raises:
-            DynamoDbError: If failed to update item in DynamoDB.
+            DynamoDbClientError: If failed to update item in DynamoDB.
 
         Returns:
             dict containing the updated solution.
@@ -200,7 +200,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             )
         # TODO: Test this Exception!
         except ClientError as e:
-            raise DynamoDbError(f"Failed to update item in DynamoDB: {e}")
+            raise DynamoDbClientError(f"Failed to update item in DynamoDB: {e}")
 
         return self.model(**result["Attributes"])
 
@@ -211,7 +211,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             item_id: Item id to be deleted from DynamoDB table.
 
         Raises:
-            DynamoDbError: If failed to delete item from DynamoDB.
+            DynamoDbClientError: If failed to delete item from DynamoDB.
 
         Returns:
             ModelType containing result from delete query to dynamoDB.
@@ -221,6 +221,6 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                 Key={"id": str(item_id)}, ConditionExpression="attribute_exists(id)"
             )
         except ClientError as e:
-            raise DynamoDbError(f"Failed to delete item from DynamoDB: {e}")
+            raise DynamoDbClientError(f"Failed to delete item from DynamoDB: {e}")
 
         return self.model(**result)

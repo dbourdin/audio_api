@@ -3,7 +3,7 @@ import uuid
 from typing import BinaryIO
 
 from audio_api import schemas
-from audio_api.aws.dynamodb.exceptions import DynamoDbError
+from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
 from audio_api.aws.dynamodb.radio_programs import RadioProgramDatabaseError
 from audio_api.aws.dynamodb.repositories import radio_programs_repository
@@ -72,7 +72,7 @@ class RadioPrograms:
             program_file: MP3 file containing the radio program.
 
         Raises:
-            DynamoDbError: If failed to store new RadioProgram in DB.
+            DynamoDbClientError: If failed to store new RadioProgram in DB.
 
         Returns:
             RadioProgramModel: Model containing stored data.
@@ -85,7 +85,7 @@ class RadioPrograms:
         )
         try:
             new_program = cls.radio_programs_repository.put_item(item=radio_program_db)
-        except DynamoDbError as e:
+        except DynamoDbClientError as e:
             if uploaded_file.file_url:
                 cls._delete_file_from_s3(file_name=uploaded_file.file_name)
             raise e
