@@ -3,6 +3,7 @@ import uuid
 from typing import BinaryIO
 
 from audio_api import schemas
+from audio_api.api.schemas import RadioProgramCreateInSchema
 from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.dynamodb.models import (
     RadioProgramPutItemModel,
@@ -72,7 +73,7 @@ class RadioPrograms:
     def create(
         cls,
         *,
-        radio_program: schemas.RadioProgramCreateIn,
+        radio_program: RadioProgramCreateInSchema,
         program_file: BinaryIO,
     ) -> RadioProgramModel:
         """Create a new RadioProgram by uploading to s3 and storing metadata in DB.

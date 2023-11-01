@@ -6,7 +6,12 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from audio_api import schemas
-from audio_api.api.schemas import RadioProgramGetSchema, RadioProgramListSchema
+from audio_api.api.schemas import (
+    RadioProgramCreateInSchema,
+    RadioProgramCreateOutSchema,
+    RadioProgramGetSchema,
+    RadioProgramListSchema,
+)
 from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.domain.exceptions import RadioProgramNotFoundError
@@ -84,7 +89,7 @@ def get_all() -> Any:
 
 @router.post(
     "",
-    response_model=schemas.RadioProgramCreateOut,
+    response_model=RadioProgramCreateOutSchema,
     summary="Create a RadioProgram",
     description="Create a RadioProgram",
     status_code=status.HTTP_201_CREATED,
@@ -95,8 +100,8 @@ def get_all() -> Any:
 )
 async def create(
     *,
-    program_in: schemas.RadioProgramCreateIn = Depends(
-        as_form(schemas.RadioProgramCreateIn)
+    program_in: RadioProgramCreateInSchema = Depends(
+        as_form(RadioProgramCreateInSchema)
     ),
     program_file: UploadFile = File(...),
 ) -> Any:

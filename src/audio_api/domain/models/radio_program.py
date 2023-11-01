@@ -16,7 +16,7 @@ class RadioProgramFileModel(S3BaseSchema):
 class BaseRadioProgramModel(BaseModel):
     """BaseRadioProgramModel schema class."""
 
-    title: str | None = Field(example="Shopping 2.0 #1")
+    title: str = Field(example="Shopping 2.0 #1")
     description: str | None = Field(example="Pilot program")
     air_date: date | None
     radio_program: RadioProgramFileModel | None
@@ -25,4 +25,5 @@ class BaseRadioProgramModel(BaseModel):
 class RadioProgramModel(BaseRadioProgramModel):
     """RadioProgramModel class."""
 
+    # TODO: This shouldn't be None
     id: UUID | None
