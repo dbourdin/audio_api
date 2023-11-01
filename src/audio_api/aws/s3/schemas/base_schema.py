@@ -1,10 +1,10 @@
 """S3BaseSchema class."""
 from typing import BinaryIO
 
-from audio_api.schemas import APISchema
+from pydantic import BaseModel
 
 
-class S3BaseSchema(APISchema):
+class S3BaseSchema(BaseModel):
     """S3BaseSchema class."""
 
     file_name: str
