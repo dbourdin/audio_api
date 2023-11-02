@@ -2,10 +2,21 @@
 
 import logging
 
+from audio_api.logger.formatter import DefaultFormatter
 from audio_api.logger.settings import get_settings
 
 settings = get_settings()
-logging.basicConfig(format=settings.LOG_FORMAT, level=settings.LOG_LEVEL.value)
+
+formatter = DefaultFormatter(
+    fmt=settings.LOG_FORMAT,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logging.basicConfig(
+    level=settings.LOG_LEVEL.value,
+    handlers=[logging.StreamHandler()],
+)
+logging.root.handlers[0].setFormatter(formatter)
 
 
 def get_logger(logger_name: str) -> logging.Logger:

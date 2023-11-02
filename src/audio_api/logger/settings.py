@@ -23,7 +23,7 @@ class LoggingSettings(BaseSettings):
     """
 
     LOG_LEVEL: LoggingEnum = LoggingEnum.info
-    LOG_FORMAT: str = "%(levelprefix)s %(asctime)s | %(message)s"
+    LOG_FORMAT: str = "%(levelprefix)s %(asctime)s | %(name)s: %(message)s"
 
 
 @lru_cache(maxsize=1)
