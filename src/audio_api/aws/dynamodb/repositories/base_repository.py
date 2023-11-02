@@ -129,7 +129,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             )["Items"]
         # TODO: Test this Exception!
         except ClientError as e:
-            logger.error(f"Failed to get_item {item_id} from {self.table_name}.")
+            logger.error(f"Failed to get_item {item_id} from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get item from DynamoDB: {e}")
 
         if result_query:
@@ -148,7 +148,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             items = [self.model(**item) for item in self.table.scan().get("Items", [])]
         # TODO: Test this Exception!
         except ClientError as e:
-            logger.error(f"Failed to get_items from {self.table_name}.")
+            logger.error(f"Failed to get_items from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get items from DynamoDB: {e}")
 
         return items
@@ -173,10 +173,10 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             self.table.put_item(Item=item_dict)
         # TODO: Test this Exception!
         except ClientError as e:
-            logger.error(f"Failed to put_item {item_id} on {self.table_name}.")
+            logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to store new item in DynamoDB: {e}")
 
-        logger.info(f"Successfully put_item {item_id} on {self.table_name}.")
+        logger.info(f"Successfully put_item {item_id} on {self.table_name} table.")
         # TODO: Can model be read from response instead??
         return self.model(**item_dict)
 
@@ -206,13 +206,13 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             )
         # TODO: Test this Exception!
         except ClientError as e:
-            logger.error(f"Failed to update_item {item_id} on {self.table_name}")
+            logger.error(f"Failed to update_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to update item in DynamoDB: {e}")
 
-        logger.info(f"Successfully update_item {item_id} on {self.table_name}")
+        logger.info(f"Successfully update_item {item_id} on {self.table_name} table.")
         return self.model(**result["Attributes"])
 
-    def delete_item(self, item_id: UUID) -> type[ModelType]:
+    def delete_item(self, item_id: UUID) -> None:
         """Delete an item from the DynamoDB table based on the provided id.
 
         Args:
@@ -220,17 +220,19 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to delete item from DynamoDB.
-
-        Returns:
-            ModelType containing result from delete query to dynamoDB.
         """
         try:
-            result = self.table.delete_item(
+            response = self.table.delete_item(
                 Key={"id": str(item_id)}, ConditionExpression="attribute_exists(id)"
             )
         except ClientError as e:
-            logger.error(f"Failed to delete_item {item_id} on {self.table_name}")
+            logger.error(f"Failed to delete_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to delete item from DynamoDB: {e}")
 
-        logger.info(f"Successfully delete_item {item_id} on {self.table_name}")
-        return self.model(**result)
+        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+        if status != 200:
+            logger.error(
+                f"Failed to delete_item {item_id} from {self.table_name} table."
+            )
+
+        logger.info(f"Successfully delete_item {item_id} on {self.table_name} table.")
