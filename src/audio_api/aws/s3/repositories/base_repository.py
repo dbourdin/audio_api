@@ -15,8 +15,10 @@ from audio_api.aws.s3.exceptions import (
 )
 from audio_api.aws.s3.models import S3CreateModel, S3FileModel
 from audio_api.aws.settings import AwsResources, S3Buckets, get_settings
+from audio_api.logger.logger import get_logger
 from audio_api.settings import EnvironmentEnum
 
+logger = get_logger("s3_repository")
 settings = get_settings()
 
 
@@ -52,7 +54,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             BaseClient: Boto3 client set up for S3.
         """
         return boto3.client(
-            AwsResources.S3,
+            AwsResources.s3,
             endpoint_url=settings.AWS_ENDPOINT_URL,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
@@ -72,8 +74,8 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             return f"{settings.AWS_ENDPOINT_URL}/{self.bucket}/{object_key}"
         return f"https://{self.bucket}.s3.amazonaws.com/{object_key}"
 
-    def store(self, item: CreateModelType) -> type[ModelType]:
-        """Upload an object to the S3 bucket.
+    def put_object(self, item: CreateModelType) -> type[ModelType]:
+        """Put an object to the S3 bucket.
 
         Args:
             item: Item to be stored in S3 bucket.
@@ -94,20 +96,30 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
                 Bucket=self.bucket, Key=item.file_name, Body=item.file
             )
         except ClientError as e:
+            logger.error(
+                f"Failed to put_object {item.file_name} in {self.bucket} bucket."
+            )
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 200:
+            logger.error(
+                f"Failed to put_object {item.file_name} in {self.bucket} bucket."
+            )
+
             raise S3PersistenceError(
                 f"Unsuccessful S3 put_object response. Status: {status}"
             )
 
+        logger.info(
+            f"Successfully put_object {item.file_name} in {self.bucket} bucket."
+        )
         return self.model(
             file_name=item.file_name, file_url=self._build_object_url(item.file_name)
         )
 
-    def read_object(self, object_key: str) -> StreamingBody:
-        """Read an object from the S3 bucket.
+    def get_object(self, object_key: str) -> StreamingBody:
+        """Get an object from the S3 bucket.
 
         Args:
             object_key (str): The key (path) of the object in the S3 bucket.
@@ -122,18 +134,24 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         try:
             response = self.s3_client.get_object(Bucket=self.bucket, Key=object_key)
         except ClientError as e:
+            logger.error(
+                f"Failed to get_object {object_key} from {self.bucket} bucket."
+            )
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 200:
+            logger.error(
+                f"Failed to get_object {object_key} from {self.bucket} bucket."
+            )
             raise S3PersistenceError(
                 f"Unsuccessful S3 get_object response. Status - {status}"
             )
 
         return response.get("Body")
 
-    def list_all(self) -> list[type[ModelType]]:
-        """Get a list with all items created in S3 Bucket.
+    def list_objects(self) -> list[type[ModelType]]:
+        """Get a list with all objects created in S3 Bucket.
 
         Raises:
             S3ClientError: If failed to receive response from S3
@@ -144,6 +162,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         try:
             files = self.s3_client.list_objects_v2(Bucket=self.bucket)
         except ClientError as e:
+            logger.error(f"Failed to list_objects_v2 from {self.bucket} bucket.")
             raise S3ClientError(f"Failed to get response from S3: {e}")
         return [
             self.model(
@@ -152,7 +171,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             for obj in files.get("Contents", [])
         ]
 
-    def delete_object(self, object_key: str):
+    def delete_object(self, object_key: str) -> None:
         """Delete an object from the S3 bucket.
 
         Args:
@@ -166,19 +185,20 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         try:
             response = self.s3_client.delete_object(Bucket=self.bucket, Key=object_key)
         except ClientError as e:
+            logger.error(
+                f"Failed to delete_object {object_key} from {self.bucket} bucket."
+            )
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 204:
+            logger.error(
+                f"Failed to delete_object {object_key} from {self.bucket} bucket."
+            )
             raise S3PersistenceError(
                 f"Object deletion was not successful. Status - {status}"
             )
 
-    def delete_file_by_url(self, url: str):
-        """Delete a file in S3 by url.
-
-        Args:
-            url: URL to the file to be deleted.
-        """
-        file_name = url.split("/")[-1]
-        self.delete_object(object_key=file_name)
+        logger.info(
+            f"Successfully delete_object {object_key} from {self.bucket} bucket."
+        )

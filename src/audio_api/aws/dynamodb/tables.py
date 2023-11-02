@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 
+from audio_api.aws.dynamodb.models import RadioProgramItemModel
 from audio_api.aws.settings import DynamoDbTables
 
 
@@ -17,8 +18,8 @@ class DynamoDbTable(BaseModel):
 
 
 dynamodb_tables = {
-    DynamoDbTables.RadioPrograms: DynamoDbTable(
-        table_name=DynamoDbTables.RadioPrograms,
+    RadioProgramItemModel: DynamoDbTable(
+        table_name=DynamoDbTables.radio_programs,
         attribute_name="id",
         attribute_type="S",
         key_type="HASH",

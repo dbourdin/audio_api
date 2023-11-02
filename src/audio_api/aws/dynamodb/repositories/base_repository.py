@@ -14,8 +14,11 @@ from audio_api.aws.dynamodb.models import (
     DynamoDbPutItemModel,
     DynamoDbUpdateItemModel,
 )
-from audio_api.aws.settings import AwsResources, DynamoDbTables, get_settings
+from audio_api.aws.dynamodb.tables import dynamodb_tables
+from audio_api.aws.settings import AwsResources, get_settings
+from audio_api.logger.logger import get_logger
 
+logger = get_logger("dynamodb_repository")
 settings = get_settings()
 
 
@@ -30,25 +33,23 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
     def __init__(
         self,
         model: type[ModelType],
-        table: DynamoDbTables,
     ):
         """Repository with default methods to Create, Read, Update, Delete (CRUD).
 
         Args:
             model: A DynamoDbItemModel class.
-            table: A DynamoDB table.
         """
         self.model = model
         self.dynamodb_client = self.get_dynamodb_client()
         self.dynamodb_resource = self.get_dynamodb_resource()
-        # TODO: Bound table to Model and get from there.
-        self.table = self.dynamodb_resource.Table(table)
+        self.table_name = dynamodb_tables[self.model].table_name
+        self.table = self.dynamodb_resource.Table(self.table_name)
 
     @classmethod
     def get_dynamodb_client(cls) -> BaseClient:
         """Return a DynamoDB Client configured with boto3."""
         return boto3.client(
-            AwsResources.DYNAMODB,
+            AwsResources.dynamodb,
             endpoint_url=settings.AWS_ENDPOINT_URL,
             region_name=settings.AWS_DEFAULT_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -59,7 +60,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
     def get_dynamodb_resource(cls):
         """Return a DynamoDB Resource configured with boto3."""
         return boto3.resource(
-            AwsResources.DYNAMODB,
+            AwsResources.dynamodb,
             endpoint_url=settings.AWS_ENDPOINT_URL,
             region_name=settings.AWS_DEFAULT_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -128,6 +129,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             )["Items"]
         # TODO: Test this Exception!
         except ClientError as e:
+            logger.error(f"Failed to get_item {item_id} from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get item from DynamoDB: {e}")
 
         if result_query:
@@ -146,6 +148,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             items = [self.model(**item) for item in self.table.scan().get("Items", [])]
         # TODO: Test this Exception!
         except ClientError as e:
+            logger.error(f"Failed to get_items from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get items from DynamoDB: {e}")
 
         return items
@@ -163,14 +166,17 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             ModelType: Retrieved item from DynamoDB.
         """
         item_dict = item.dict()
-        item_dict["id"] = str(uuid4())
+        item_id = str(uuid4())
+        item_dict["id"] = item_id
 
         try:
             self.table.put_item(Item=item_dict)
         # TODO: Test this Exception!
         except ClientError as e:
+            logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to store new item in DynamoDB: {e}")
 
+        logger.info(f"Successfully put_item {item_id} on {self.table_name} table.")
         # TODO: Can model be read from response instead??
         return self.model(**item_dict)
 
@@ -200,11 +206,13 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             )
         # TODO: Test this Exception!
         except ClientError as e:
+            logger.error(f"Failed to update_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to update item in DynamoDB: {e}")
 
+        logger.info(f"Successfully update_item {item_id} on {self.table_name} table.")
         return self.model(**result["Attributes"])
 
-    def delete_item(self, item_id: UUID) -> type[ModelType]:
+    def delete_item(self, item_id: UUID) -> None:
         """Delete an item from the DynamoDB table based on the provided id.
 
         Args:
@@ -212,15 +220,19 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to delete item from DynamoDB.
-
-        Returns:
-            ModelType containing result from delete query to dynamoDB.
         """
         try:
-            result = self.table.delete_item(
+            response = self.table.delete_item(
                 Key={"id": str(item_id)}, ConditionExpression="attribute_exists(id)"
             )
         except ClientError as e:
+            logger.error(f"Failed to delete_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to delete item from DynamoDB: {e}")
 
-        return self.model(**result)
+        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+        if status != 200:
+            logger.error(
+                f"Failed to delete_item {item_id} from {self.table_name} table."
+            )
+
+        logger.info(f"Successfully delete_item {item_id} on {self.table_name} table.")
