@@ -2,9 +2,10 @@
 
 from fastapi import FastAPI
 
-from audio_api.api.v1.routers import router
-from audio_api.schemas import ApiVersionModel
-from audio_api.settings import EnvironmentEnum, Settings, get_settings
+from audio_api.api.routers import router
+from audio_api.api.schemas import ApiVersionModel
+from audio_api.api.settings import ApiSettings, get_settings
+from audio_api.settings import EnvironmentEnum
 
 settings = get_settings()
 
@@ -15,7 +16,7 @@ app = FastAPI(
     debug=settings.ENVIRONMENT == EnvironmentEnum.development,
     root_path=settings.ROOT_PATH,
 )
-app.include_router(router, prefix="/v1")
+app.include_router(router)
 
 
 @app.get("/version", tags=["version"], response_model=ApiVersionModel)
@@ -28,7 +29,7 @@ def get_api_version():
 
 if settings.ENVIRONMENT == EnvironmentEnum.development:
 
-    @app.get("/settings", tags=["settings"], response_model=Settings)
+    @app.get("/settings", tags=["settings"], response_model=ApiSettings)
     def get_api_settings():
         """Get API Settings."""
         return settings
