@@ -7,7 +7,7 @@ from pprint import pformat
 import typer
 import uvicorn
 
-from audio_api.settings import get_settings
+from audio_api.api.settings import get_settings
 
 app = typer.Typer()
 settings = get_settings()
