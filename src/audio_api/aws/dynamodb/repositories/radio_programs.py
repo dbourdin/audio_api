@@ -18,5 +18,5 @@ class RadioProgramsRepository(
 
 
 radio_programs_repository = RadioProgramsRepository(
-    RadioProgramItemModel, DynamoDbTables.RadioPrograms
+    RadioProgramItemModel, DynamoDbTables.radio_programs
 )

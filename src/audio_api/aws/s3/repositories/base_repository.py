@@ -52,7 +52,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             BaseClient: Boto3 client set up for S3.
         """
         return boto3.client(
-            AwsResources.S3,
+            AwsResources.s3,
             endpoint_url=settings.AWS_ENDPOINT_URL,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,

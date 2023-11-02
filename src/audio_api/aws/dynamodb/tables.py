@@ -17,8 +17,8 @@ class DynamoDbTable(BaseModel):
 
 
 dynamodb_tables = {
-    DynamoDbTables.RadioPrograms: DynamoDbTable(
-        table_name=DynamoDbTables.RadioPrograms,
+    DynamoDbTables.radio_programs: DynamoDbTable(
+        table_name=DynamoDbTables.radio_programs,
         attribute_name="id",
         attribute_type="S",
         key_type="HASH",

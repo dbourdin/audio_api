@@ -10,20 +10,20 @@ from audio_api.settings import EnvironmentSettings
 class AwsResources(str, Enum):
     """AwsResource Enum."""
 
-    DYNAMODB = "dynamodb"
-    S3 = "s3"
+    dynamodb = "dynamodb"
+    s3 = "s3"
 
 
 class DynamoDbTables(str, Enum):
     """DynamoDbTable Enum."""
 
-    RadioPrograms = "radio_programs"
+    radio_programs = "radio_programs"
 
 
 class S3Buckets(str, Enum):
     """S3Buckets Enum."""
 
-    RadioPrograms = "radio-programs"
+    radio_programs = "radio-programs"
 
 
 class AwsSettings(EnvironmentSettings, BaseSettings):
@@ -36,14 +36,7 @@ class AwsSettings(EnvironmentSettings, BaseSettings):
     RADIO_PROGRAMS_BUCKET: str
 
 
-class Settings(AwsSettings):
-    """AWS settings.
-
-    Includes configuration tied specifically to this module.
-    """
-
-
 @lru_cache(maxsize=1)
-def get_settings() -> Settings:
+def get_settings() -> AwsSettings:
     """Get Aws Settings."""
-    return Settings()
+    return AwsSettings()

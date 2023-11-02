@@ -3,8 +3,8 @@ from pprint import pformat
 
 import uvicorn
 
+from audio_api.api.settings import get_settings
 from audio_api.aws.tests.testcontainers.localstack import localstack_container
-from audio_api.settings import get_settings
 
 settings = get_settings()
 

@@ -65,4 +65,4 @@ class LocalStackContainer(LocalStackContainer_):
 
 localstack_container = LocalStackContainer(image="localstack/localstack:2.3.2")
 localstack_container.with_bind_ports(localstack_port, localstack_port)
-localstack_container.with_services(AwsResources.S3, AwsResources.DYNAMODB)
+localstack_container.with_services(AwsResources.s3, AwsResources.dynamodb)

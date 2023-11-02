@@ -48,7 +48,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
     def get_dynamodb_client(cls) -> BaseClient:
         """Return a DynamoDB Client configured with boto3."""
         return boto3.client(
-            AwsResources.DYNAMODB,
+            AwsResources.dynamodb,
             endpoint_url=settings.AWS_ENDPOINT_URL,
             region_name=settings.AWS_DEFAULT_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -59,7 +59,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
     def get_dynamodb_resource(cls):
         """Return a DynamoDB Resource configured with boto3."""
         return boto3.resource(
-            AwsResources.DYNAMODB,
+            AwsResources.dynamodb,
             endpoint_url=settings.AWS_ENDPOINT_URL,
             region_name=settings.AWS_DEFAULT_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
