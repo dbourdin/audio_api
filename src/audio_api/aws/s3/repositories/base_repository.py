@@ -15,8 +15,10 @@ from audio_api.aws.s3.exceptions import (
 )
 from audio_api.aws.s3.models import S3CreateModel, S3FileModel
 from audio_api.aws.settings import AwsResources, S3Buckets, get_settings
+from audio_api.logging.logger import get_logger
 from audio_api.settings import EnvironmentEnum
 
+logger = get_logger("s3_repository")
 settings = get_settings()
 
 
@@ -94,14 +96,18 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
                 Bucket=self.bucket, Key=item.file_name, Body=item.file
             )
         except ClientError as e:
+            logger.error(f"Failed to put_object {item.file_name} in {self.bucket}")
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 200:
+            logger.error(f"Failed to put_object {item.file_name} in {self.bucket}")
+
             raise S3PersistenceError(
                 f"Unsuccessful S3 put_object response. Status: {status}"
             )
 
+        logger.info(f"Successfully put_object {item.file_name} in {self.bucket}")
         return self.model(
             file_name=item.file_name, file_url=self._build_object_url(item.file_name)
         )
@@ -122,10 +128,12 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         try:
             response = self.s3_client.get_object(Bucket=self.bucket, Key=object_key)
         except ClientError as e:
+            logger.error(f"Failed to get_object {object_key} from {self.bucket}")
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 200:
+            logger.error(f"Failed to get_object {object_key} from {self.bucket}")
             raise S3PersistenceError(
                 f"Unsuccessful S3 get_object response. Status - {status}"
             )
@@ -144,6 +152,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         try:
             files = self.s3_client.list_objects_v2(Bucket=self.bucket)
         except ClientError as e:
+            logger.error(f"Failed to list_objects_v2 from {self.bucket}")
             raise S3ClientError(f"Failed to get response from S3: {e}")
         return [
             self.model(
@@ -166,10 +175,12 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         try:
             response = self.s3_client.delete_object(Bucket=self.bucket, Key=object_key)
         except ClientError as e:
+            logger.error(f"Failed to delete_object {object_key} from {self.bucket}")
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 204:
+            logger.error(f"Failed to delete_object {object_key} from {self.bucket}")
             raise S3PersistenceError(
                 f"Object deletion was not successful. Status - {status}"
             )
