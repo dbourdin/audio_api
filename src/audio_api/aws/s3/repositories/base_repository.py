@@ -74,8 +74,8 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             return f"{settings.AWS_ENDPOINT_URL}/{self.bucket}/{object_key}"
         return f"https://{self.bucket}.s3.amazonaws.com/{object_key}"
 
-    def store(self, item: CreateModelType) -> type[ModelType]:
-        """Upload an object to the S3 bucket.
+    def put_object(self, item: CreateModelType) -> type[ModelType]:
+        """Put an object to the S3 bucket.
 
         Args:
             item: Item to be stored in S3 bucket.
@@ -118,8 +118,8 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             file_name=item.file_name, file_url=self._build_object_url(item.file_name)
         )
 
-    def read_object(self, object_key: str) -> StreamingBody:
-        """Read an object from the S3 bucket.
+    def get_object(self, object_key: str) -> StreamingBody:
+        """Get an object from the S3 bucket.
 
         Args:
             object_key (str): The key (path) of the object in the S3 bucket.
@@ -150,8 +150,8 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
 
         return response.get("Body")
 
-    def list_all(self) -> list[type[ModelType]]:
-        """Get a list with all items created in S3 Bucket.
+    def list_objects(self) -> list[type[ModelType]]:
+        """Get a list with all objects created in S3 Bucket.
 
         Raises:
             S3ClientError: If failed to receive response from S3
@@ -202,12 +202,3 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         logger.info(
             f"Successfully delete_object {object_key} from {self.bucket} bucket."
         )
-
-    def delete_file_by_url(self, url: str):
-        """Delete a file in S3 by url.
-
-        Args:
-            url: URL to the file to be deleted.
-        """
-        file_name = url.split("/")[-1]
-        self.delete_object(object_key=file_name)

@@ -87,7 +87,7 @@ class RadioPrograms:
         Returns:
             RadioProgramModel: Model containing stored data.
         """
-        uploaded_file = cls.radio_program_files_repository.store(
+        uploaded_file = cls.radio_program_files_repository.put_object(
             RadioProgramFileCreate(file_name=radio_program.title, file=program_file)
         )
         radio_program_db = RadioProgramPutItemModel(
@@ -133,7 +133,7 @@ class RadioPrograms:
 
         if program_file:
             # Will throw RadioProgramS3Error if fails to persist program.
-            uploaded_file = cls.radio_program_files_repository.store(
+            uploaded_file = cls.radio_program_files_repository.put_object(
                 RadioProgramFileCreate(
                     file_name=update_program.title, file=program_file
                 )
