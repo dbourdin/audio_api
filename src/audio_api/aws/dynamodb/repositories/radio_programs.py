@@ -6,7 +6,6 @@ from audio_api.aws.dynamodb.models import (
     RadioProgramUpdateItemModel,
 )
 from audio_api.aws.dynamodb.repositories import BaseDynamoDbRepository
-from audio_api.aws.settings import DynamoDbTables
 
 
 class RadioProgramsRepository(
@@ -17,6 +16,4 @@ class RadioProgramsRepository(
     """RadioProgramsRepository class."""
 
 
-radio_programs_repository = RadioProgramsRepository(
-    RadioProgramItemModel, DynamoDbTables.radio_programs
-)
+radio_programs_repository = RadioProgramsRepository(RadioProgramItemModel)

@@ -14,7 +14,8 @@ from audio_api.aws.dynamodb.models import (
     DynamoDbPutItemModel,
     DynamoDbUpdateItemModel,
 )
-from audio_api.aws.settings import AwsResources, DynamoDbTables, get_settings
+from audio_api.aws.dynamodb.tables import dynamodb_tables
+from audio_api.aws.settings import AwsResources, get_settings
 
 settings = get_settings()
 
@@ -30,19 +31,18 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
     def __init__(
         self,
         model: type[ModelType],
-        table: DynamoDbTables,
     ):
         """Repository with default methods to Create, Read, Update, Delete (CRUD).
 
         Args:
             model: A DynamoDbItemModel class.
-            table: A DynamoDB table.
         """
         self.model = model
         self.dynamodb_client = self.get_dynamodb_client()
         self.dynamodb_resource = self.get_dynamodb_resource()
-        # TODO: Bound table to Model and get from there.
-        self.table = self.dynamodb_resource.Table(table)
+        self.table = self.dynamodb_resource.Table(
+            dynamodb_tables[self.model].table_name
+        )
 
     @classmethod
     def get_dynamodb_client(cls) -> BaseClient:
