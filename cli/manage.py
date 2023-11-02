@@ -8,7 +8,7 @@ import typer
 import uvicorn
 
 from audio_api.api.settings import get_settings
-from audio_api.logging.logger import get_logger
+from audio_api.logger.logger import get_logger
 
 logger = get_logger("manage_cli")
 app = typer.Typer()

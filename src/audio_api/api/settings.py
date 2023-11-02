@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import PositiveInt
 
-from audio_api.logging.settings import LoggingSettings
+from audio_api.logger.settings import LoggingSettings
 from audio_api.settings import EnvironmentEnum, EnvironmentSettings
 from audio_api.version import __version__
 

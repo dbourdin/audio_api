@@ -2,7 +2,7 @@
 
 import logging
 
-from audio_api.logging.settings import get_settings
+from audio_api.logger.settings import get_settings
 
 settings = get_settings()
 logging.basicConfig(format=settings.LOG_FORMAT, level=settings.LOG_LEVEL)

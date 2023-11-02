@@ -15,7 +15,7 @@ from audio_api.aws.s3.exceptions import (
 )
 from audio_api.aws.s3.models import S3CreateModel, S3FileModel
 from audio_api.aws.settings import AwsResources, S3Buckets, get_settings
-from audio_api.logging.logger import get_logger
+from audio_api.logger.logger import get_logger
 from audio_api.settings import EnvironmentEnum
 
 logger = get_logger("s3_repository")

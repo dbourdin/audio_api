@@ -16,7 +16,7 @@ from audio_api.aws.dynamodb.models import (
 )
 from audio_api.aws.dynamodb.tables import dynamodb_tables
 from audio_api.aws.settings import AwsResources, get_settings
-from audio_api.logging.logger import get_logger
+from audio_api.logger.logger import get_logger
 
 logger = get_logger("dynamodb_repository")
 settings = get_settings()
