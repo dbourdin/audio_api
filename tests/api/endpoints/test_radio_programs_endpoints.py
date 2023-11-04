@@ -1,5 +1,4 @@
 """Test /programs endpoints."""
-from tempfile import SpooledTemporaryFile
 from unittest import mock
 
 from fastapi import status
@@ -14,8 +13,9 @@ from audio_api.api.schemas import (
     RadioProgramUpdateOutSchema,
 )
 from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
+from audio_api.aws.s3.exceptions import S3ClientError
 from audio_api.domain.exceptions import RadioProgramNotFoundError
-from tests.test_utils import radio_program
+from tests.test_utils import create_temp_file, radio_program
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
@@ -150,15 +150,14 @@ def test_create_program(
     """Create a RadioProgram via POST."""
     # Given
     created_program = radio_program(title="Test program post")
-    radio_programs_mock.create.return_value = created_program
     radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
-    files = {
-        "program_file": ("program_file", SpooledTemporaryFile(), "multipart/form-data")
-    }
+    radio_programs_mock.create.return_value = created_program
     expected = RadioProgramCreateOutSchema.parse_obj(created_program.dict())
 
     # When
-    response = client.post("/programs", data=radio_program_in.dict(), files=files)
+    response = client.post(
+        "/programs", data=radio_program_in.dict(), files=create_temp_file()
+    )
     received = RadioProgramCreateOutSchema.parse_raw(response.text)
 
     # Then
@@ -184,22 +183,29 @@ def test_create_program_fails_with_incorrect_values(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
-def test_create_program_raises_500_if_dynamodb_error(
+def test_create_program_raises_500_if_failed_to_store_on_s3(
     radio_programs_mock,
     client: TestClient,
 ):
-    """Get radio programs list should raise 500 if failed to get data from dynamodb."""
+    """Get radio programs list should raise 500 if failed to store on s3."""
     # Given
-    radio_programs_mock.get_all.side_effect = DynamoDbClientError(
-        "Failed to get items from DynamoDB: test error"
+    created_program = radio_program(title="Test program post")
+    radio_programs_mock.create.return_value = created_program
+    radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
+    radio_programs_mock.create.side_effect = S3ClientError(
+        "Failed to get response from S3: test error"
     )
 
     # When
-    response = client.get("/programs")
+    response = client.post(
+        "/programs", data=radio_program_in.dict(), files=create_temp_file()
+    )
 
     # Then
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
-    radio_programs_mock.get_all.assert_called_once()
+    radio_programs_mock.create.assert_called_once_with(
+        radio_program=radio_program_in, program_file=mock.ANY
+    )
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
