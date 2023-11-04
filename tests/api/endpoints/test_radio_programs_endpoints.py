@@ -168,6 +168,23 @@ def test_create_program(
     )
 
 
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_create_program_without_file_raises_error(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Create a RadioProgram via POST."""
+    # Given
+    created_program = radio_program(title="Test program post")
+    radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
+
+    # When
+    response = client.post("/programs", data=radio_program_in.dict())
+
+    # Then
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
+
+
 def test_create_program_fails_with_incorrect_values(
     client: TestClient,
 ):
@@ -261,11 +278,41 @@ def test_create_program_raises_500_if_dynamodb_client_error(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
-def test_update_program_without_file(
+def test_update_program(
     radio_programs_mock,
     client: TestClient,
 ):
     """Edit a RadioProgram via PUT."""
+    # Given
+    updated_program = radio_program(title="test_program_update")
+    radio_programs_mock.update.return_value = updated_program
+    data_to_send = RadioProgramUpdateInSchema(**updated_program.dict())
+    expected = RadioProgramUpdateOutSchema.parse_obj(updated_program.dict())
+
+    # When
+    response = client.put(
+        f"/programs/{updated_program.id}",
+        data=data_to_send.dict(),
+        files=create_temp_file(),
+    )
+    received = RadioProgramUpdateOutSchema.parse_raw(response.text)
+
+    # Then
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert received == expected
+    radio_programs_mock.update.assert_called_once_with(
+        program_id=updated_program.id,
+        new_program=data_to_send,
+        program_file=mock.ANY,
+    )
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_update_program_without_file(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Edit a RadioProgram via PUT without file."""
     # Given
     updated_program = radio_program(title="test_program_update")
     radio_programs_mock.update.return_value = updated_program
