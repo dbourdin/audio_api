@@ -118,7 +118,7 @@ async def create(
             If failed to store RadioProgram on DB.
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to connect to S3.
-        HTTPException: HTTP_400_BAD_REQUEST
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to upload RadioProgram file to S3.
     """
     try:
@@ -137,7 +137,7 @@ async def create(
         )
     except S3PersistenceError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to upload RadioProgram file to S3.",
         )
 
