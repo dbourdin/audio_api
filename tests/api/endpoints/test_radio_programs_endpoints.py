@@ -64,7 +64,7 @@ def test_get_program_raises_500_if_dynamodb_error(
     radio_programs_mock,
     client: TestClient,
 ):
-    """Get an empty list of accounts if none created."""
+    """Get radio program should raise 500 if failed to get data from dynamodb."""
     # Given
     get_program = radio_program("test program")
     radio_programs_mock.get.side_effect = DynamoDbClientError(
@@ -94,6 +94,25 @@ def test_list_radio_programs_empty(
     # Then
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == []
+    radio_programs_mock.get_all.assert_called_once()
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_list_programs_raises_500_if_dynamodb_error(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Get radio programs list should raise 500 if failed to get data from dynamodb."""
+    # Given
+    radio_programs_mock.get_all.side_effect = DynamoDbClientError(
+        "Failed to get items from DynamoDB: test error"
+    )
+
+    # When
+    response = client.get("/programs")
+
+    # Then
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
     radio_programs_mock.get_all.assert_called_once()
 
 
