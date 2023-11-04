@@ -80,6 +80,32 @@ def test_get_program_raises_500_if_dynamodb_error(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_list_programs(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Get a list of programs."""
+    # Given
+    radio_programs = [
+        radio_program(title="Test program list #1"),
+        radio_program(title="Test program list #2"),
+    ]
+    radio_programs_mock.get_all.return_value = radio_programs
+    expected = [RadioProgramListSchema.from_orm(program) for program in radio_programs]
+
+    # When
+    response = client.get("/programs")
+    received = [
+        RadioProgramListSchema.parse_obj(program) for program in response.json()
+    ]
+
+    # Then
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert received == expected
+    radio_programs_mock.get_all.assert_called_once()
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
 def test_list_radio_programs_empty(
     radio_programs_mock,
     client: TestClient,
@@ -117,44 +143,18 @@ def test_list_programs_raises_500_if_dynamodb_error(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
-def test_list_programs(
-    radio_programs_mock,
-    client: TestClient,
-):
-    """Get a list of programs."""
-    # Given
-    radio_programs = [
-        radio_program(title="Test program list #1"),
-        radio_program(title="Test program list #2"),
-    ]
-    radio_programs_mock.get_all.return_value = radio_programs
-    expected = [RadioProgramListSchema.from_orm(program) for program in radio_programs]
-
-    # When
-    response = client.get("/programs")
-    received = [
-        RadioProgramListSchema.parse_obj(program) for program in response.json()
-    ]
-
-    # Then
-    assert response.status_code == status.HTTP_200_OK, response.text
-    assert received == expected
-    radio_programs_mock.get_all.assert_called_once()
-
-
-@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
 def test_create_program(
     radio_programs_mock,
     client: TestClient,
 ):
     """Create a RadioProgram via POST."""
     # Given
-    radio_program_in = RadioProgramCreateInSchema(title="Test program post")
+    created_program = radio_program(title="Test program post")
+    radio_programs_mock.create.return_value = created_program
+    radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
     files = {
         "program_file": ("program_file", SpooledTemporaryFile(), "multipart/form-data")
     }
-    created_program = radio_program(title=radio_program_in.title)
-    radio_programs_mock.create.return_value = created_program
     expected = RadioProgramCreateOutSchema.parse_obj(created_program.dict())
 
     # When
@@ -169,18 +169,37 @@ def test_create_program(
     )
 
 
-def test_create_program_fails_with_empty_dict(
+def test_create_program_fails_with_incorrect_values(
     client: TestClient,
 ):
-    """Cannot create a RadioProgram via POST with wrong data."""
+    """Cannot create a RadioProgram via POST without required data."""
     # Given
     data_to_send = {}
 
     # When
-    response = client.post("/programs", json=data_to_send)
+    response = client.post("/programs", data=data_to_send)
 
     # Then
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_create_program_raises_500_if_dynamodb_error(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Get radio programs list should raise 500 if failed to get data from dynamodb."""
+    # Given
+    radio_programs_mock.get_all.side_effect = DynamoDbClientError(
+        "Failed to get items from DynamoDB: test error"
+    )
+
+    # When
+    response = client.get("/programs")
+
+    # Then
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
+    radio_programs_mock.get_all.assert_called_once()
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
