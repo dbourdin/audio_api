@@ -60,7 +60,7 @@ def test_get_program_raises_404_if_not_found(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
-def test_get_program_raises_500_if_dynamodb_error(
+def test_get_program_raises_500_if_dynamodb_client_error(
     radio_programs_mock,
     client: TestClient,
 ):
@@ -124,7 +124,7 @@ def test_list_radio_programs_empty(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
-def test_list_programs_raises_500_if_dynamodb_error(
+def test_list_programs_raises_500_if_dynamodb_client_error(
     radio_programs_mock,
     client: TestClient,
 ):
@@ -220,6 +220,32 @@ def test_create_program_raises_500_if_s3_persistence_error(
     radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
     radio_programs_mock.create.side_effect = S3PersistenceError(
         "Unsuccessful S3 put_object response. Status: test error"
+    )
+
+    # When
+    response = client.post(
+        "/programs", data=radio_program_in.dict(), files=create_temp_file()
+    )
+
+    # Then
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
+    radio_programs_mock.create.assert_called_once_with(
+        radio_program=radio_program_in, program_file=mock.ANY
+    )
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_create_program_raises_500_if_dynamodb_client_error(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Get radio programs list should raise 500 if DynamoDbClientError."""
+    # Given
+    created_program = radio_program(title="Test program post")
+    radio_programs_mock.create.return_value = created_program
+    radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
+    radio_programs_mock.create.side_effect = DynamoDbClientError(
+        "Failed to store new item in DynamoDB: test error"
     )
 
     # When
