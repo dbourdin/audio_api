@@ -233,7 +233,7 @@ async def delete(
             If failed to delete RadioProgram from DB.
     """
     try:
-        RadioPrograms.remove(program_id=program_id)
+        RadioPrograms.delete(program_id=program_id)
     except RadioProgramNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

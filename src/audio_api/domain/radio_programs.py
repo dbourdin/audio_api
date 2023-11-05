@@ -158,7 +158,7 @@ class RadioPrograms:
         return updated_program
 
     @classmethod
-    def remove(
+    def delete(
         cls,
         *,
         program_id: uuid.UUID,
