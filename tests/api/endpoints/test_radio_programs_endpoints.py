@@ -185,15 +185,17 @@ def test_create_program_without_file_raises_error(
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
 
 
-def test_create_program_fails_with_incorrect_values(
+def test_create_program_without_radio_program_title_raises_error(
     client: TestClient,
 ):
-    """Cannot create a RadioProgram via POST without required data."""
+    """Cannot create a RadioProgram via POST without required title."""
     # Given
-    data_to_send = {}
+    data_to_send = {
+        "description": "program_without_title",
+    }
 
     # When
-    response = client.post("/programs", data=data_to_send)
+    response = client.post("/programs", data=data_to_send, files=create_temp_file())
 
     # Then
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
