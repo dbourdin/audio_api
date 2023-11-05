@@ -96,7 +96,7 @@ def get_all() -> Any:
     description="Create a RadioProgram",
     status_code=status.HTTP_201_CREATED,
     responses={
-        status.HTTP_400_BAD_REQUEST: {"model": APIMessage},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": APIMessage},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": APIMessage},
     },
 )
@@ -150,8 +150,8 @@ async def create(
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_404_NOT_FOUND: {"model": APIMessage},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": APIMessage},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": APIMessage},
-        status.HTTP_400_BAD_REQUEST: {"model": APIMessage},
     },
 )
 async def update(
@@ -176,7 +176,7 @@ async def update(
             If failed to store RadioProgram on DB.
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to connect to S3.
-        HTTPException: HTTP_400_BAD_REQUEST
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to upload RadioProgram file to S3.
     """
     program_file = program_file.file if program_file else None
@@ -202,7 +202,7 @@ async def update(
         )
     except S3PersistenceError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to upload RadioProgram file to S3.",
         )
 
