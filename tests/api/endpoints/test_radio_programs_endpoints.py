@@ -44,7 +44,7 @@ def test_get_program_raises_404_if_not_found(
     radio_programs_mock,
     client: TestClient,
 ):
-    """Get an empty list of accounts if none created."""
+    """Get RadioProgram should raise 404 if RadioProgram does not exist."""
     # Given
     get_program = radio_program("test program get not found")
     radio_programs_mock.get.side_effect = RadioProgramNotFoundError(
@@ -358,7 +358,7 @@ def test_update_program_file(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
-def test_edit_account_raises_if_not_found(
+def test_update_program_raises_404_if_not_found(
     radio_programs_mock,
     client: TestClient,
 ):
@@ -463,3 +463,60 @@ def test_update_program_raises_500_if_dynamodb_client_error(
         new_program=radio_program_in,
         program_file=None,
     )
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_delete_program(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Delete a RadioProgram."""
+    # Given
+    updated_program = radio_program(title="Test program post")
+    radio_programs_mock.delete.return_value = updated_program
+
+    response = client.delete(f"/programs/{updated_program.id}")
+
+    # Then
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    radio_programs_mock.delete.assert_called_once_with(program_id=updated_program.id)
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_delete_program_raises_404_if_not_found(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Delete RadioProgram should raise 404 if RadioProgram does not exist."""
+    # Given
+    delete_program = radio_program("test program get not found")
+    radio_programs_mock.delete.side_effect = RadioProgramNotFoundError(
+        f"RadioProgram with id {delete_program.id} does not exist."
+    )
+
+    # When
+    response = client.delete(f"/programs/{delete_program.id}")
+
+    # Then
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
+    radio_programs_mock.delete.assert_called_once_with(program_id=delete_program.id)
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_delete_program_raises_500_dynamodb_client_error(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Delete RadioProgram should raise 500 if DynamoDbClientError."""
+    # Given
+    delete_program = radio_program("test program get not found")
+    radio_programs_mock.delete.side_effect = DynamoDbClientError(
+        "Failed to delete item from DynamoDB: test error"
+    )
+
+    # When
+    response = client.delete(f"/programs/{delete_program.id}")
+
+    # Then
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
+    radio_programs_mock.delete.assert_called_once_with(program_id=delete_program.id)
