@@ -334,7 +334,30 @@ def test_update_program_without_file(
         program_file=None,
     )
 
-    # TODO: Add test with file
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_update_program_file(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Edit a RadioProgram file via PUT."""
+    # Given
+    updated_program = radio_program(title="test_program_update")
+    radio_programs_mock.update.return_value = updated_program
+    expected = RadioProgramUpdateOutSchema.parse_obj(updated_program.dict())
+
+    # When
+    response = client.put(f"/programs/{updated_program.id}", files=create_temp_file())
+    received = RadioProgramUpdateOutSchema.parse_raw(response.text)
+
+    # Then
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert received == expected
+    radio_programs_mock.update.assert_called_once_with(
+        program_id=updated_program.id,
+        new_program=RadioProgramUpdateInSchema(),
+        program_file=mock.ANY,
+    )
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
