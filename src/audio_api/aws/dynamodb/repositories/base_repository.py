@@ -230,9 +230,12 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             raise DynamoDbClientError(f"Failed to delete item from DynamoDB: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-        if status != 200:
+        if status == 200:
+            logger.info(
+                f"Successfully delete_item {item_id} on {self.table_name} table."
+            )
+        else:
+            # TODO: Should raise some exception??
             logger.error(
                 f"Failed to delete_item {item_id} from {self.table_name} table."
             )
-
-        logger.info(f"Successfully delete_item {item_id} on {self.table_name} table.")
