@@ -15,7 +15,7 @@ from audio_api.api.schemas import (
 from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.domain.exceptions import RadioProgramNotFoundError
-from tests.test_utils import create_temp_file, radio_program
+from tests.api.test_utils import create_temp_file, radio_program
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
