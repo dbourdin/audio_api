@@ -28,7 +28,7 @@ services:
       - ../pyproject.toml:/app/pyproject.toml
       - ../poetry.lock:/app/poetry.lock
     env_file:
-      - ../config/api.env
+      - config/api.env
     depends_on:
       - localstack
 
