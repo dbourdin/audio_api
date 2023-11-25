@@ -71,7 +71,8 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             str: Uploaded file URL.
         """
         if settings.ENVIRONMENT == EnvironmentEnum.development:
-            return f"{settings.AWS_ENDPOINT_URL}/{self.bucket}/{object_key}"
+            endpoint_url = settings.AWS_ENDPOINT_URL.replace("localstack", "localhost")
+            return f"{endpoint_url}/{self.bucket}/{object_key}"
         return f"https://{self.bucket}.s3.amazonaws.com/{object_key}"
 
     def put_object(self, item: CreateModelType) -> type[ModelType]:
