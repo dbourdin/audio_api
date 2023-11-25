@@ -16,14 +16,11 @@ class RadioProgramFileModel(RadioProgramFile):
 class BaseRadioProgramSchema(BaseModel):
     """BaseRadioProgramSchema class."""
 
-    title: str = Field(example="Shopping 2.0 #1")
+    title: str = Field(example="Shopping 2.0 #001")
     description: str | None = Field(example="Pilot program")
-    air_date: date | None
+    air_date: date | None = Field(example=date(2018, 8, 11))
     spotify_playlist: str | None = Field(
-        example=(
-            "https://open.spotify.com/playlist/"
-            "37i9dQZF1DWSDoVybeQisg?si=e15a3a65324a4628"
-        )
+        example=("https://open.spotify.com/playlist/2xDwNVlBPYOVeqzsQjxVCe")
     )
 
 
