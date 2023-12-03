@@ -35,12 +35,8 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
     def test_upload_file_to_s3(self):
         """Test that we can upload a file successfully to S3."""
         # Given
-        upload_file, content = create_upload_file(TEST_AUDIO_FILE)
-        file_name = upload_file.filename.split(".")[0]
-        radio_program_create_model = S3CreateModel(
-            file_name=file_name,
-            file=upload_file.file,
-        )
+        upload_file = create_upload_file(TEST_AUDIO_FILE)
+        radio_program_create_model = S3CreateModel(**upload_file.dict())
 
         # When
         uploaded_file = self._radio_program_files_repository.put_object(
@@ -49,19 +45,18 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
         downloaded_file_response = requests.get(uploaded_file.file_url)
 
         # Then
-        assert downloaded_file_response.content == content, "file content is different"
-        assert file_name in uploaded_file.file_name
-        assert file_name in uploaded_file.file_url
+        assert (
+            downloaded_file_response.content == upload_file.file_content
+        ), "file content is different"
+        assert upload_file.file_name in uploaded_file.file_name
+        assert upload_file.file_name in uploaded_file.file_url
 
     @mock.patch(S3_CLIENT_MOCK_PATCH)
     def test_upload_file_to_s3_raises_s3_client_error(self, s3_client_mock):
         """Test S3ClientError is raised if put_object raises ClientError."""
         # Given
-        upload_file, content = create_upload_file(TEST_AUDIO_FILE)
-        file_name = upload_file.filename.split(".")[0]
         radio_program_create_model = S3CreateModel(
-            file_name=file_name,
-            file=upload_file.file,
+            **create_upload_file(TEST_AUDIO_FILE).dict(),
         )
 
         # When
@@ -78,11 +73,8 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
     def test_upload_file_to_s3_raises_s3_persistence_error(self, s3_client_mock):
         """Test S3PersistenceError is raised if put_object returns an error code."""
         # Given
-        upload_file, content = create_upload_file(TEST_AUDIO_FILE)
-        file_name = upload_file.filename.split(".")[0]
         radio_program_create_model = S3CreateModel(
-            file_name=file_name,
-            file=upload_file.file,
+            **create_upload_file(TEST_AUDIO_FILE).dict(),
         )
 
         # When
