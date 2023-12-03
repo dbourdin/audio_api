@@ -107,7 +107,6 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             logger.error(
                 f"Failed to put_object {item.file_name} in {self.bucket} bucket."
             )
-
             raise S3PersistenceError(
                 f"Unsuccessful S3 put_object response. Status: {status}"
             )
