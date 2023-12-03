@@ -66,8 +66,9 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
         """Test that we can upload a file successfully to S3."""
         # Given
         upload_file, content = self._get_upload_file()
+        file_name = upload_file.filename.split(".")[0]
         radio_program_create_model = S3CreateModel(
-            file_name="test radio program file",
+            file_name=file_name,
             file=upload_file.file,
         )
 
@@ -79,3 +80,5 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
 
         # Then
         assert downloaded_file_response.content == content, "file content is different"
+        assert file_name in uploaded_file.file_name
+        assert file_name in uploaded_file.file_url
