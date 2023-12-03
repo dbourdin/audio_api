@@ -10,7 +10,7 @@ from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.aws.s3.models import S3CreateModel
 from audio_api.aws.s3.repositories import radio_program_files_repository
 from tests.api.test_utils import UploadFileModel, create_upload_file
-from tests.aws.testcontainers.localstack import localstack_container
+from tests.aws.testcontainers.localstack import LocalStackContainerTest
 
 TEST_AUDIO_FILE = Path(__file__).resolve().parent.joinpath("test_audio_file.mp3")
 S3_CLIENT_MOCK_PATCH = (
@@ -25,17 +25,10 @@ def upload_file() -> UploadFileModel:
     return create_upload_file(TEST_AUDIO_FILE)
 
 
-class TestRadioProgramFilesRepository:
+class TestRadioProgramFilesRepository(LocalStackContainerTest):
     """TestRadioProgramFilesRepository class."""
 
-    _localstack_container = localstack_container
     _radio_program_files_repository = radio_program_files_repository
-
-    @pytest.fixture(scope="class", autouse=True)
-    def localstack_container(self):
-        """Start and stop localstack container."""
-        with self._localstack_container:
-            yield self._localstack_container
 
     def test_upload_file_to_s3(self, upload_file: UploadFileModel):
         """Test that we can upload a file successfully to S3."""

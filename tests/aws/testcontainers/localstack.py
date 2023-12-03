@@ -2,6 +2,7 @@
 
 from urllib.parse import urlparse
 
+import pytest
 from testcontainers.localstack import LocalStackContainer as LocalStackContainer_
 
 from audio_api.aws.dynamodb.repositories.base_repository import BaseDynamoDbRepository
@@ -66,3 +67,15 @@ class LocalStackContainer(LocalStackContainer_):
 localstack_container = LocalStackContainer(image="localstack/localstack:2.3.2")
 localstack_container.with_bind_ports(localstack_port, localstack_port)
 localstack_container.with_services(AwsResources.s3, AwsResources.dynamodb)
+
+
+class LocalStackContainerTest:
+    """LocalStackContainerTest class."""
+
+    _localstack_container = localstack_container
+
+    @pytest.fixture(scope="class", autouse=True)
+    def localstack_container(self):
+        """Start and stop localstack container."""
+        with self._localstack_container:
+            yield self._localstack_container
