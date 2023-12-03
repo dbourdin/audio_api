@@ -25,6 +25,7 @@ S3_CLIENT_PATH = (
 )
 S3_GET_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.get_object"
 S3_PUT_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.put_object"
+S3_LIST_OBJECTS_MOCK_PATCH = f"{S3_CLIENT_PATH}.list_objects_v2"
 
 
 @pytest.fixture(scope="class")
@@ -186,3 +187,18 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
 
         # Then
         assert objects_list == expected_results
+
+    @mock.patch(S3_LIST_OBJECTS_MOCK_PATCH)
+    def test_list_objects_from_s3_raises_s3_client_error(
+        self, list_objects_mock: mock.patch
+    ):
+        """Test S3ClientError is raised if list_objects_v2 raises ClientError."""
+        # When
+        list_objects_mock.side_effect = ClientError(
+            error_response={"Error": {"status": 500}},
+            operation_name="test error.",
+        )
+
+        # Then
+        with pytest.raises(S3ClientError):
+            self._radio_program_files_repository.list_objects()
