@@ -285,3 +285,22 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         delete_objects_mock.assert_called_once_with(
             Bucket=self._radio_program_files_repository.bucket_name, Key=delete_key
         )
+
+    def test_delete_all(self):
+        """Test delete_all removes all objects from S3 bucket."""
+        # Given
+        radio_program_create_model = S3CreateModel(**self.upload_file.dict())
+        uploaded_file = self._radio_program_files_repository.put_object(
+            radio_program_create_model
+        )
+        expected_deleted_response = [{"Key": uploaded_file.file_name}]
+
+        # When
+        response = self._radio_program_files_repository.delete_all()
+        downloaded_deleted_file_response = requests.get(uploaded_file.file_url)
+
+        # Then
+        assert response[0].get("Deleted") == expected_deleted_response
+        assert downloaded_deleted_file_response.status_code == 404
+        with pytest.raises(S3FileNotFoundError):
+            self._radio_program_files_repository.get_object(uploaded_file.file_name)
