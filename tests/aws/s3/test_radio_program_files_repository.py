@@ -57,7 +57,9 @@ class TestRadioProgramFilesRepository:
 
     @mock.patch(S3_CLIENT_MOCK_PATCH)
     def test_upload_file_to_s3_raises_s3_client_error(
-        self, upload_file: UploadFileModel, s3_client_mock: mock.patch
+        self,
+        s3_client_mock: mock.patch,
+        upload_file: UploadFileModel,
     ):
         """Test S3ClientError is raised if put_object raises ClientError."""
         # Given
@@ -75,7 +77,7 @@ class TestRadioProgramFilesRepository:
 
     @mock.patch(S3_CLIENT_MOCK_PATCH)
     def test_upload_file_to_s3_raises_s3_persistence_error(
-        self, upload_file: UploadFileModel, s3_client_mock: mock.patch
+        self, s3_client_mock: mock.patch, upload_file: UploadFileModel
     ):
         """Test S3PersistenceError is raised if put_object returns an error code."""
         # Given
