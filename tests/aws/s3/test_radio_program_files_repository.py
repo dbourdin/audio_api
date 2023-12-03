@@ -1,4 +1,5 @@
 """Test RadioProgramFilesRepository."""
+import unittest
 from pathlib import Path
 from unittest import mock
 
@@ -13,27 +14,33 @@ from tests.api.test_utils import UploadFileModel, create_upload_file
 from tests.aws.testcontainers.localstack import LocalStackContainerTest
 
 TEST_AUDIO_FILE = Path(__file__).resolve().parent.joinpath("test_audio_file.mp3")
-S3_CLIENT_MOCK_PATCH = (
+S3_CLIENT_PATH = (
     "audio_api.aws.s3.repositories.radio_program_files"
     ".radio_program_files_repository.s3_client"
 )
+S3_GET_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.get_object"
+S3_PUT_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.put_object"
 
 
 @pytest.fixture(scope="class")
-def upload_file() -> UploadFileModel:
+def upload_file(request):
     """Return an UploadFileModel instance."""
-    return create_upload_file(TEST_AUDIO_FILE)
+    upload_file = create_upload_file(TEST_AUDIO_FILE)
+    request.cls.upload_file = upload_file
+    return upload_file
 
 
-class TestRadioProgramFilesRepository(LocalStackContainerTest):
+@pytest.mark.usefixtures("upload_file")
+class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest):
     """TestRadioProgramFilesRepository class."""
 
     _radio_program_files_repository = radio_program_files_repository
+    upload_file: UploadFileModel
 
-    def test_upload_file_to_s3(self, upload_file: UploadFileModel):
+    def test_upload_file_to_s3(self):
         """Test that we can upload a file successfully to S3."""
         # Given
-        radio_program_create_model = S3CreateModel(**upload_file.dict())
+        radio_program_create_model = S3CreateModel(**self.upload_file.dict())
 
         # When
         uploaded_file = self._radio_program_files_repository.put_object(
@@ -43,23 +50,21 @@ class TestRadioProgramFilesRepository(LocalStackContainerTest):
 
         # Then
         assert (
-            downloaded_file_response.content == upload_file.file_content
+            downloaded_file_response.content == self.upload_file.file_content
         ), "file content is different"
         assert radio_program_create_model.file_name in uploaded_file.file_name
         assert radio_program_create_model.file_name in uploaded_file.file_url
 
-    @mock.patch(S3_CLIENT_MOCK_PATCH)
+    @mock.patch(S3_PUT_OBJECT_MOCK_PATCH)
     def test_upload_file_to_s3_raises_s3_client_error(
-        self,
-        s3_client_mock: mock.patch,
-        upload_file: UploadFileModel,
+        self, put_object_mock: mock.patch
     ):
         """Test S3ClientError is raised if put_object raises ClientError."""
         # Given
-        radio_program_create_model = S3CreateModel(**upload_file.dict())
+        radio_program_create_model = S3CreateModel(**self.upload_file.dict())
 
         # When
-        s3_client_mock.put_object.side_effect = ClientError(
+        put_object_mock.side_effect = ClientError(
             error_response={"Error": {"status": 500}},
             operation_name="test error.",
         )
@@ -68,27 +73,25 @@ class TestRadioProgramFilesRepository(LocalStackContainerTest):
         with pytest.raises(S3ClientError):
             self._radio_program_files_repository.put_object(radio_program_create_model)
 
-    @mock.patch(S3_CLIENT_MOCK_PATCH)
+    @mock.patch(S3_PUT_OBJECT_MOCK_PATCH)
     def test_upload_file_to_s3_raises_s3_persistence_error(
-        self, s3_client_mock: mock.patch, upload_file: UploadFileModel
+        self, put_object_mock: mock.patch
     ):
         """Test S3PersistenceError is raised if put_object returns an error code."""
         # Given
-        radio_program_create_model = S3CreateModel(**upload_file.dict())
+        radio_program_create_model = S3CreateModel(**self.upload_file.dict())
 
         # When
-        s3_client_mock.put_object.return_value = {
-            "ResponseMetadata": {"HTTPStatusCode": 500},
-        }
+        put_object_mock.return_value = {"ResponseMetadata": {"HTTPStatusCode": 500}}
 
         # Then
         with pytest.raises(S3PersistenceError):
             self._radio_program_files_repository.put_object(radio_program_create_model)
 
-    def test_get_object_by_file_name(self, upload_file: UploadFileModel):
+    def test_get_file_from_s3(self):
         """Test that we can retrieve a file successfully from S3."""
         # Given
-        radio_program_create_model = S3CreateModel(**upload_file.dict())
+        radio_program_create_model = S3CreateModel(**self.upload_file.dict())
 
         # When
         uploaded_file = self._radio_program_files_repository.put_object(
@@ -99,4 +102,47 @@ class TestRadioProgramFilesRepository(LocalStackContainerTest):
         )
 
         # Then
-        assert uploaded_object.read() == upload_file.file_content
+        assert uploaded_object.read() == self.upload_file.file_content
+
+    @mock.patch(S3_GET_OBJECT_MOCK_PATCH)
+    def test_get_file_from_s3_raises_s3_client_error(self, get_object_mock: mock.patch):
+        """Test S3ClientError is raised if get_object raises ClientError."""
+        # Given
+        radio_program_create_model = S3CreateModel(**self.upload_file.dict())
+        uploaded_file = self._radio_program_files_repository.put_object(
+            radio_program_create_model
+        )
+
+        # When
+        get_object_mock.side_effect = ClientError(
+            error_response={"Error": {"status": 500}},
+            operation_name="test error.",
+        )
+
+        # Then
+        with pytest.raises(S3ClientError):
+            self._radio_program_files_repository.get_object(uploaded_file.file_name)
+
+    @mock.patch(S3_GET_OBJECT_MOCK_PATCH)
+    def test_get_file_from_s3_raises_s3_persistence_error(
+        self, get_object_mock: mock.patch
+    ):
+        """Test S3PersistenceError is raised if get_object returns an error code."""
+        # Given
+        radio_program_create_model = S3CreateModel(**self.upload_file.dict())
+        uploaded_file = self._radio_program_files_repository.put_object(
+            radio_program_create_model
+        )
+
+        # When
+        get_object_mock.return_value = {"ResponseMetadata": {"HTTPStatusCode": 500}}
+
+        # Then
+        with pytest.raises(S3PersistenceError):
+            self._radio_program_files_repository.get_object(uploaded_file.file_name)
+
+    def test_get_non_existent_file_from_s3_raises_s3_persistence_error(self):
+        """Test S3ClientError is raised if object does not exist."""
+        # Then
+        with pytest.raises(S3ClientError):
+            self._radio_program_files_repository.get_object("non_existent_file")
