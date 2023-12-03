@@ -26,6 +26,7 @@ S3_CLIENT_PATH = (
 S3_GET_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.get_object"
 S3_PUT_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.put_object"
 S3_LIST_OBJECTS_MOCK_PATCH = f"{S3_CLIENT_PATH}.list_objects_v2"
+S3_DELETE_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.delete_object"
 
 
 @pytest.fixture(scope="class")
@@ -75,7 +76,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
 
         # When
         put_object_mock.side_effect = ClientError(
-            error_response={"Error": {"status": 500}},
+            error_response={"Error": {"Code": 500, "Message": "test_error"}},
             operation_name="test error.",
         )
 
@@ -126,7 +127,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
 
         # When
         get_object_mock.side_effect = ClientError(
-            error_response={"Error": {"status": 500}},
+            error_response={"Error": {"Code": 500, "Message": "test_error"}},
             operation_name="test error.",
         )
 
@@ -195,10 +196,71 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         """Test S3ClientError is raised if list_objects_v2 raises ClientError."""
         # When
         list_objects_mock.side_effect = ClientError(
-            error_response={"Error": {"status": 500}},
+            error_response={"Error": {"Code": 500, "Message": "test_error"}},
             operation_name="test error.",
         )
 
         # Then
         with pytest.raises(S3ClientError):
             self._radio_program_files_repository.list_objects()
+
+    def test_delete_object(self):
+        """Test delete_object successfully removes an object from S3 bucket."""
+        # Given
+        radio_program_create_model = S3CreateModel(**self.upload_file.dict())
+        uploaded_file = self._radio_program_files_repository.put_object(
+            radio_program_create_model
+        )
+        downloaded_file_response = requests.get(uploaded_file.file_url)
+
+        # When
+        self._radio_program_files_repository.delete_object(uploaded_file.file_name)
+        downloaded_deleted_file_response = requests.get(uploaded_file.file_url)
+
+        # Then
+        assert downloaded_file_response.status_code == 200
+        assert downloaded_deleted_file_response.status_code == 404
+        assert (
+            downloaded_file_response.content != downloaded_deleted_file_response.content
+        )
+        with pytest.raises(S3FileNotFoundError):
+            self._radio_program_files_repository.get_object(uploaded_file.file_name)
+
+    @mock.patch(S3_DELETE_OBJECT_MOCK_PATCH)
+    def test_delete_object_raises_s3_client_error(
+        self, delete_objects_mock: mock.patch
+    ):
+        """Test delete_object raises S3ClientError if ClientError."""
+        # Given
+        delete_key = "non_existent_file"
+
+        # When
+        delete_objects_mock.side_effect = ClientError(
+            error_response={"Error": {"Code": 500, "Message": "test_error"}},
+            operation_name="test error.",
+        )
+
+        # Then
+        with pytest.raises(S3ClientError):
+            self._radio_program_files_repository.delete_object(delete_key)
+        delete_objects_mock.assert_called_once_with(
+            Bucket=self._radio_program_files_repository.bucket_name, Key=delete_key
+        )
+
+    @mock.patch(S3_DELETE_OBJECT_MOCK_PATCH)
+    def test_delete_object_raises_s3_persistence_error(
+        self, delete_objects_mock: mock.patch
+    ):
+        """Test S3PersistenceError is raised if delete_object returns an error code."""
+        # Given
+        delete_key = "non_existent_file"
+
+        # When
+        delete_objects_mock.return_value = {"ResponseMetadata": {"HTTPStatusCode": 500}}
+
+        # Then
+        with pytest.raises(S3PersistenceError):
+            self._radio_program_files_repository.delete_object(delete_key)
+        delete_objects_mock.assert_called_once_with(
+            Bucket=self._radio_program_files_repository.bucket_name, Key=delete_key
+        )
