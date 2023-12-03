@@ -1,4 +1,5 @@
 """Test RadioProgramFilesRepository."""
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -40,6 +41,10 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
 
     _radio_program_files_repository = radio_program_files_repository
     upload_file: UploadFileModel
+
+    @pytest.fixture(autouse=True)
+    def _empty_bucket(self):
+        self._radio_program_files_repository.delete_all()
 
     def test_upload_file_to_s3(self):
         """Test that we can upload a file successfully to S3."""
@@ -96,6 +101,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         """Test that we can retrieve a file successfully from S3."""
         # Given
         radio_program_create_model = S3CreateModel(**self.upload_file.dict())
+        expected_content = self.upload_file.file_content
 
         # When
         uploaded_file = self._radio_program_files_repository.put_object(
@@ -106,7 +112,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         )
 
         # Then
-        assert uploaded_object.read() == self.upload_file.file_content
+        assert uploaded_object.read() == expected_content
 
     @mock.patch(S3_GET_OBJECT_MOCK_PATCH)
     def test_get_file_from_s3_raises_s3_client_error(self, get_object_mock: mock.patch):
@@ -150,3 +156,33 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # Then
         with pytest.raises(S3FileNotFoundError):
             self._radio_program_files_repository.get_object("non_existent_file")
+
+    def test_list_objects_from_s3_returns_empty_list(self):
+        """Test that list_objects returns an empty list if no files are found."""
+        # Given
+        expected_result = []
+
+        # When
+        objects_list = self._radio_program_files_repository.list_objects()
+
+        # Then
+        assert objects_list == expected_result
+
+    def test_list_objects_from_s3(self):
+        """Test that we can retrieve a file successfully from S3."""
+        # Given
+        uploaded_file_1 = self._radio_program_files_repository.put_object(
+            S3CreateModel(**self.upload_file.dict())
+        )
+        # Wait 3 second to avoid name collision
+        time.sleep(3)
+        uploaded_file_2 = self._radio_program_files_repository.put_object(
+            S3CreateModel(**self.upload_file.dict())
+        )
+        expected_results = [uploaded_file_1, uploaded_file_2]
+
+        # When
+        objects_list = self._radio_program_files_repository.list_objects()
+
+        # Then
+        assert objects_list == expected_results
