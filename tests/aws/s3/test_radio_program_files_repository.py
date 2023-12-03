@@ -84,3 +84,19 @@ class TestRadioProgramFilesRepository(LocalStackContainerTest):
         # Then
         with pytest.raises(S3PersistenceError):
             self._radio_program_files_repository.put_object(radio_program_create_model)
+
+    def test_get_object_by_file_name(self, upload_file: UploadFileModel):
+        """Test that we can retrieve a file successfully from S3."""
+        # Given
+        radio_program_create_model = S3CreateModel(**upload_file.dict())
+
+        # When
+        uploaded_file = self._radio_program_files_repository.put_object(
+            radio_program_create_model
+        )
+        uploaded_object = self._radio_program_files_repository.get_object(
+            uploaded_file.file_name
+        )
+
+        # Then
+        assert uploaded_object.read() == upload_file.file_content
