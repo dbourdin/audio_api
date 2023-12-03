@@ -11,6 +11,7 @@ from audio_api.aws.s3.buckets import S3_BUCKETS
 from audio_api.aws.s3.exceptions import (
     S3BucketNotImplementedError,
     S3ClientError,
+    S3FileNotFoundError,
     S3PersistenceError,
 )
 from audio_api.aws.s3.models import S3CreateModel, S3FileModel
@@ -125,6 +126,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             object_key (str): The key (path) of the object in the S3 bucket.
 
         Raises:
+            S3FileNotFoundError: If file does not exist in S3 bucket.
             S3ClientError: If failed to get response from S3.
             S3PersistenceError: If failed to retrieve object from S3.
 
@@ -133,6 +135,11 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         """
         try:
             response = self.s3_client.get_object(Bucket=self.bucket, Key=object_key)
+        except self.s3_client.exceptions.NoSuchKey as e:
+            logger.error(f"File {object_key} not found in {self.bucket} bucket.")
+            raise S3FileNotFoundError(
+                f"File {object_key} not found in {self.bucket} bucket: {e}"
+            )
         except ClientError as e:
             logger.error(
                 f"Failed to get_object {object_key} from {self.bucket} bucket."

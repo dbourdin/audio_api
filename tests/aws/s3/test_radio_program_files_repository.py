@@ -7,7 +7,11 @@ import pytest
 import requests
 from botocore.exceptions import ClientError
 
-from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
+from audio_api.aws.s3.exceptions import (
+    S3ClientError,
+    S3FileNotFoundError,
+    S3PersistenceError,
+)
 from audio_api.aws.s3.models import S3CreateModel
 from audio_api.aws.s3.repositories import radio_program_files_repository
 from tests.api.test_utils import UploadFileModel, create_upload_file
@@ -144,5 +148,5 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
     def test_get_non_existent_file_from_s3_raises_s3_persistence_error(self):
         """Test S3ClientError is raised if object does not exist."""
         # Then
-        with pytest.raises(S3ClientError):
+        with pytest.raises(S3FileNotFoundError):
             self._radio_program_files_repository.get_object("non_existent_file")
