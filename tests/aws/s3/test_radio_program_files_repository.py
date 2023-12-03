@@ -83,6 +83,11 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # Then
         with pytest.raises(S3ClientError):
             self._radio_program_files_repository.put_object(radio_program_create_model)
+        put_object_mock.assert_called_once_with(
+            Bucket=self._radio_program_files_repository.bucket_name,
+            Key=radio_program_create_model.file_name,
+            Body=radio_program_create_model.file,
+        )
 
     @mock.patch(S3_PUT_OBJECT_MOCK_PATCH)
     def test_upload_file_to_s3_raises_s3_persistence_error(
@@ -98,6 +103,11 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # Then
         with pytest.raises(S3PersistenceError):
             self._radio_program_files_repository.put_object(radio_program_create_model)
+        put_object_mock.assert_called_once_with(
+            Bucket=self._radio_program_files_repository.bucket_name,
+            Key=radio_program_create_model.file_name,
+            Body=radio_program_create_model.file,
+        )
 
     def test_get_file_from_s3(self):
         """Test that we can retrieve a file successfully from S3."""
@@ -134,6 +144,10 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # Then
         with pytest.raises(S3ClientError):
             self._radio_program_files_repository.get_object(uploaded_file.file_name)
+        get_object_mock.assert_called_once_with(
+            Bucket=self._radio_program_files_repository.bucket_name,
+            Key=uploaded_file.file_name,
+        )
 
     @mock.patch(S3_GET_OBJECT_MOCK_PATCH)
     def test_get_file_from_s3_raises_s3_persistence_error(
@@ -152,6 +166,10 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # Then
         with pytest.raises(S3PersistenceError):
             self._radio_program_files_repository.get_object(uploaded_file.file_name)
+        get_object_mock.assert_called_once_with(
+            Bucket=self._radio_program_files_repository.bucket_name,
+            Key=uploaded_file.file_name,
+        )
 
     def test_get_non_existent_file_from_s3_raises_s3_persistence_error(self):
         """Test S3ClientError is raised if object does not exist."""
@@ -203,6 +221,9 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # Then
         with pytest.raises(S3ClientError):
             self._radio_program_files_repository.list_objects()
+        list_objects_mock.assert_called_once_with(
+            Bucket=self._radio_program_files_repository.bucket_name,
+        )
 
     def test_delete_object(self):
         """Test delete_object successfully removes an object from S3 bucket."""
