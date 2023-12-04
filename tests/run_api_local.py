@@ -4,8 +4,8 @@ from pprint import pformat
 import uvicorn
 
 from audio_api.api.settings import get_settings
-from audio_api.aws.tests.testcontainers.localstack import localstack_container
 from audio_api.logger.logger import get_logger
+from tests.aws.testcontainers.localstack import localstack_container
 
 logger = get_logger("api_runner")
 settings = get_settings()

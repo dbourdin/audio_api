@@ -11,6 +11,7 @@ from audio_api.aws.s3.buckets import S3_BUCKETS
 from audio_api.aws.s3.exceptions import (
     S3BucketNotImplementedError,
     S3ClientError,
+    S3FileNotFoundError,
     S3PersistenceError,
 )
 from audio_api.aws.s3.models import S3CreateModel, S3FileModel
@@ -36,14 +37,28 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             model: A pydantic BaseModel class.
         """
         self.model = model
-        self.bucket = self._get_s3_bucket()
+        self.bucket_name = self._get_s3_bucket_name()
         self.s3_client = self.get_s3_client()
+        self.s3_bucket = self.get_s3_bucket_resource()
 
-    def _get_s3_bucket(self) -> S3Buckets:
+    def _get_s3_bucket_name(self) -> S3Buckets:
         """Get S3 bucket from S3_BUCKETS."""
         bucket = S3_BUCKETS.get(self.model)
         if not bucket:
             raise S3BucketNotImplementedError
+        return bucket
+
+    def get_s3_bucket_resource(self):
+        """Return an S3 bucket Resource configured with boto3."""
+        s3 = boto3.resource(
+            AwsResources.s3,
+            endpoint_url=settings.AWS_ENDPOINT_URL,
+            region_name=settings.AWS_DEFAULT_REGION,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        )
+        bucket = s3.Bucket(self.bucket_name)
+        bucket.delete_all = self._delete_all
         return bucket
 
     @classmethod
@@ -72,8 +87,8 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         """
         if settings.ENVIRONMENT == EnvironmentEnum.development:
             endpoint_url = settings.AWS_ENDPOINT_URL.replace("localstack", "localhost")
-            return f"{endpoint_url}/{self.bucket}/{object_key}"
-        return f"https://{self.bucket}.s3.amazonaws.com/{object_key}"
+            return f"{endpoint_url}/{self.bucket_name}/{object_key}"
+        return f"https://{self.bucket_name}.s3.amazonaws.com/{object_key}"
 
     def put_object(self, item: CreateModelType) -> type[ModelType]:
         """Put an object to the S3 bucket.
@@ -94,26 +109,25 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         item.file_name = f"{timestamp}_{item.file_name}.mp3"
         try:
             response = self.s3_client.put_object(
-                Bucket=self.bucket, Key=item.file_name, Body=item.file
+                Bucket=self.bucket_name, Key=item.file_name, Body=item.file
             )
         except ClientError as e:
             logger.error(
-                f"Failed to put_object {item.file_name} in {self.bucket} bucket."
+                f"Failed to put_object {item.file_name} in {self.bucket_name} bucket."
             )
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 200:
             logger.error(
-                f"Failed to put_object {item.file_name} in {self.bucket} bucket."
+                f"Failed to put_object {item.file_name} in {self.bucket_name} bucket."
             )
-
             raise S3PersistenceError(
                 f"Unsuccessful S3 put_object response. Status: {status}"
             )
 
         logger.info(
-            f"Successfully put_object {item.file_name} in {self.bucket} bucket."
+            f"Successfully put_object {item.file_name} in {self.bucket_name} bucket."
         )
         return self.model(
             file_name=item.file_name, file_url=self._build_object_url(item.file_name)
@@ -126,6 +140,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             object_key (str): The key (path) of the object in the S3 bucket.
 
         Raises:
+            S3FileNotFoundError: If file does not exist in S3 bucket.
             S3ClientError: If failed to get response from S3.
             S3PersistenceError: If failed to retrieve object from S3.
 
@@ -133,17 +148,24 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             StreamingBody: The content of the file.
         """
         try:
-            response = self.s3_client.get_object(Bucket=self.bucket, Key=object_key)
+            response = self.s3_client.get_object(
+                Bucket=self.bucket_name, Key=object_key
+            )
+        except self.s3_client.exceptions.NoSuchKey as e:
+            logger.error(f"File {object_key} not found in {self.bucket_name} bucket.")
+            raise S3FileNotFoundError(
+                f"File {object_key} not found in {self.bucket_name} bucket: {e}"
+            )
         except ClientError as e:
             logger.error(
-                f"Failed to get_object {object_key} from {self.bucket} bucket."
+                f"Failed to get_object {object_key} from {self.bucket_name} bucket."
             )
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 200:
             logger.error(
-                f"Failed to get_object {object_key} from {self.bucket} bucket."
+                f"Failed to get_object {object_key} from {self.bucket_name} bucket."
             )
             raise S3PersistenceError(
                 f"Unsuccessful S3 get_object response. Status - {status}"
@@ -161,9 +183,9 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             list[type[ModelType]]: List containing all files in S3 bucket.
         """
         try:
-            files = self.s3_client.list_objects_v2(Bucket=self.bucket)
+            files = self.s3_client.list_objects_v2(Bucket=self.bucket_name)
         except ClientError as e:
-            logger.error(f"Failed to list_objects_v2 from {self.bucket} bucket.")
+            logger.error(f"Failed to list_objects_v2 from {self.bucket_name} bucket.")
             raise S3ClientError(f"Failed to get response from S3: {e}")
         return [
             self.model(
@@ -184,22 +206,51 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         """
         # Attempt to delete the object
         try:
-            response = self.s3_client.delete_object(Bucket=self.bucket, Key=object_key)
+            response = self.s3_client.delete_object(
+                Bucket=self.bucket_name, Key=object_key
+            )
         except ClientError as e:
             logger.error(
-                f"Failed to delete_object {object_key} from {self.bucket} bucket."
+                f"Failed to delete_object {object_key} from {self.bucket_name} bucket."
             )
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 204:
             logger.error(
-                f"Failed to delete_object {object_key} from {self.bucket} bucket."
+                f"Failed to delete_object {object_key} from {self.bucket_name} bucket."
             )
             raise S3PersistenceError(
                 f"Object deletion was not successful. Status - {status}"
             )
 
         logger.info(
-            f"Successfully delete_object {object_key} from {self.bucket} bucket."
+            f"Successfully delete_object {object_key} from {self.bucket_name} bucket."
         )
+
+    def _delete_all(self) -> list:
+        """Delete all objects in the S3 bucket.
+
+        Returns:
+            list: List containing delete response data.
+        """
+        return self.s3_bucket.objects.all().delete()
+
+    def delete_all(self) -> list:
+        """Delete all objects in the S3 bucket.
+
+        Raises:
+            S3ClientError: If failed to delete objects from S3.
+
+        Returns:
+            list: List containing delete response data.
+        """
+        try:
+            return self.s3_bucket.delete_all()
+        except Exception:
+            logger.error(
+                f"Failed to delete all objects from {self.bucket_name} bucket."
+            )
+            raise S3ClientError(
+                f"Failed to delete all objects from {self.bucket_name} bucket."
+            )
