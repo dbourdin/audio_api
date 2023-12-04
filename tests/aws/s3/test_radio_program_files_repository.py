@@ -19,14 +19,16 @@ from tests.api.test_utils import UploadFileModel, create_upload_file
 from tests.aws.testcontainers.localstack import LocalStackContainerTest
 
 TEST_AUDIO_FILE = Path(__file__).resolve().parent.joinpath("test_audio_file.mp3")
-S3_CLIENT_PATH = (
-    "audio_api.aws.s3.repositories.radio_program_files"
-    ".radio_program_files_repository.s3_client"
+RADIO_PROGRAM_FILES_REPOSITORY_PATH = (
+    "audio_api.aws.s3.repositories.radio_program_files.radio_program_files_repository"
 )
+S3_CLIENT_PATH = f"{RADIO_PROGRAM_FILES_REPOSITORY_PATH}.s3_client"
+S3_BUCKET_PATH = f"{RADIO_PROGRAM_FILES_REPOSITORY_PATH}.s3_bucket"
 S3_GET_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.get_object"
 S3_PUT_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.put_object"
 S3_LIST_OBJECTS_MOCK_PATCH = f"{S3_CLIENT_PATH}.list_objects_v2"
 S3_DELETE_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.delete_object"
+S3_DELETE_ALL_MOCK_PATCH = f"{S3_BUCKET_PATH}.delete_all"
 
 
 @pytest.fixture(scope="class")
@@ -77,7 +79,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # When
         put_object_mock.side_effect = ClientError(
             error_response={"Error": {"Code": 500, "Message": "test_error"}},
-            operation_name="test error.",
+            operation_name="test_error",
         )
 
         # Then
@@ -138,7 +140,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # When
         get_object_mock.side_effect = ClientError(
             error_response={"Error": {"Code": 500, "Message": "test_error"}},
-            operation_name="test error.",
+            operation_name="test_error",
         )
 
         # Then
@@ -215,7 +217,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # When
         list_objects_mock.side_effect = ClientError(
             error_response={"Error": {"Code": 500, "Message": "test_error"}},
-            operation_name="test error.",
+            operation_name="test_error",
         )
 
         # Then
@@ -258,7 +260,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         # When
         delete_objects_mock.side_effect = ClientError(
             error_response={"Error": {"Code": 500, "Message": "test_error"}},
-            operation_name="test error.",
+            operation_name="test_error",
         )
 
         # Then
@@ -304,3 +306,14 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         assert downloaded_deleted_file_response.status_code == 404
         with pytest.raises(S3FileNotFoundError):
             self._radio_program_files_repository.get_object(uploaded_file.file_name)
+
+    @mock.patch(S3_DELETE_ALL_MOCK_PATCH)
+    def test_delete_all_raises_s3_client_error(self, delete_objects_mock: mock.patch):
+        """Test delete_all raises S3ClientError if Exception."""
+        # When
+        delete_objects_mock.side_effect = Exception("test_error")
+
+        # Then
+        with pytest.raises(S3ClientError):
+            self._radio_program_files_repository.delete_all()
+        delete_objects_mock.assert_called_once()
