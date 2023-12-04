@@ -57,7 +57,9 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
-        return s3.Bucket(self.bucket_name)
+        bucket = s3.Bucket(self.bucket_name)
+        bucket.delete_all = self._delete_all
+        return bucket
 
     @classmethod
     def get_s3_client(cls) -> BaseClient:
@@ -226,6 +228,14 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             f"Successfully delete_object {object_key} from {self.bucket_name} bucket."
         )
 
+    def _delete_all(self) -> list:
+        """Delete all objects in the S3 bucket.
+
+        Returns:
+            list: List containing delete response data.
+        """
+        return self.s3_bucket.objects.all().delete()
+
     def delete_all(self) -> list:
         """Delete all objects in the S3 bucket.
 
@@ -233,10 +243,10 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             S3ClientError: If failed to delete objects from S3.
 
         Returns:
-            list: Empty list after deleting all objects.
+            list: List containing delete response data.
         """
         try:
-            return self.s3_bucket.objects.all().delete()
+            return self.s3_bucket.delete_all()
         except Exception:
             logger.error(
                 f"Failed to delete all objects from {self.bucket_name} bucket."
