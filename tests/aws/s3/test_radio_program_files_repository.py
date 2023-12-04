@@ -9,26 +9,35 @@ import requests
 from botocore.exceptions import ClientError
 
 from audio_api.aws.s3.exceptions import (
+    S3BucketNotImplementedError,
     S3ClientError,
     S3FileNotFoundError,
     S3PersistenceError,
 )
 from audio_api.aws.s3.models import S3CreateModel
 from audio_api.aws.s3.repositories import radio_program_files_repository
+from audio_api.settings import EnvironmentEnum
 from tests.api.test_utils import UploadFileModel, create_upload_file
 from tests.aws.testcontainers.localstack import LocalStackContainerTest
 
 TEST_AUDIO_FILE = Path(__file__).resolve().parent.joinpath("test_audio_file.mp3")
+S3_REPOSITORIES_PATH = "audio_api.aws.s3.repositories"
 RADIO_PROGRAM_FILES_REPOSITORY_PATH = (
-    "audio_api.aws.s3.repositories.radio_program_files.radio_program_files_repository"
+    f"{S3_REPOSITORIES_PATH}.radio_program_files.radio_program_files_repository"
 )
+
 S3_CLIENT_PATH = f"{RADIO_PROGRAM_FILES_REPOSITORY_PATH}.s3_client"
 S3_BUCKET_PATH = f"{RADIO_PROGRAM_FILES_REPOSITORY_PATH}.s3_bucket"
+
+REPOSITORY_MODEL_PATH = f"{RADIO_PROGRAM_FILES_REPOSITORY_PATH}.model"
 S3_GET_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.get_object"
 S3_PUT_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.put_object"
 S3_LIST_OBJECTS_MOCK_PATCH = f"{S3_CLIENT_PATH}.list_objects_v2"
 S3_DELETE_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.delete_object"
 S3_DELETE_ALL_MOCK_PATCH = f"{S3_BUCKET_PATH}.delete_all"
+ENVIRONMENT_SETTINGS_PATH = (
+    f"{S3_REPOSITORIES_PATH}.base_repository.settings.ENVIRONMENT"
+)
 
 
 @pytest.fixture(scope="class")
@@ -317,3 +326,36 @@ class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest
         with pytest.raises(S3ClientError):
             self._radio_program_files_repository.delete_all()
         delete_objects_mock.assert_called_once()
+
+    @mock.patch(REPOSITORY_MODEL_PATH)
+    def test_get_s3_bucket_name_raises_s3_bucket_not_implemented_error(
+        self, repository_model_mock: mock.patch
+    ):
+        """Test _get_s3_bucket_name raises S3BucketNotImplementedError."""
+        # When
+        repository_model_mock.return_value = "NON-EXISTENT-BUCKET"
+
+        # Then
+        with pytest.raises(S3BucketNotImplementedError):
+            self._radio_program_files_repository._get_s3_bucket_name()
+
+    @mock.patch(ENVIRONMENT_SETTINGS_PATH)
+    def test_build_object_url_returns_correct_production_url(
+        self, environment_settings_mock: mock.patch
+    ):
+        """Test _build_object_url returns correct url if environment is production."""
+        # Given
+        object_key = "test_key"
+        expected_url = (
+            f"https://{self._radio_program_files_repository.bucket_name}"
+            f".s3.amazonaws.com/{object_key}"
+        )
+
+        # When
+        environment_settings_mock.return_value = EnvironmentEnum.production
+        url = self._radio_program_files_repository._build_object_url(
+            object_key=object_key
+        )
+
+        # Then
+        assert url == expected_url
