@@ -1,6 +1,5 @@
 """Test RadioProgramFilesRepository."""
 import time
-import unittest
 from pathlib import Path
 from unittest import mock
 
@@ -49,7 +48,7 @@ def upload_file(request):
 
 
 @pytest.mark.usefixtures("upload_file")
-class TestRadioProgramFilesRepository(unittest.TestCase, LocalStackContainerTest):
+class TestRadioProgramFilesRepository(LocalStackContainerTest):
     """TestRadioProgramFilesRepository class."""
 
     _radio_program_files_repository = radio_program_files_repository

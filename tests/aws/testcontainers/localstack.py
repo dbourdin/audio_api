@@ -1,5 +1,5 @@
 """Module containing LocalStack Container."""
-
+import unittest
 from urllib.parse import urlparse
 
 import pytest
@@ -69,7 +69,7 @@ localstack_container.with_bind_ports(localstack_port, localstack_port)
 localstack_container.with_services(AwsResources.s3, AwsResources.dynamodb)
 
 
-class LocalStackContainerTest:
+class LocalStackContainerTest(unittest.TestCase):
     """LocalStackContainerTest class."""
 
     _localstack_container = localstack_container
