@@ -239,3 +239,11 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             logger.error(
                 f"Failed to delete_item {item_id} from {self.table_name} table."
             )
+
+    def delete_all(self) -> None:
+        """Delete all objects from dynamodb table."""
+        self.get_items()
+
+        with self.table.batch_writer() as batch:
+            for each in self.get_items():
+                batch.delete_item(Key=each)
