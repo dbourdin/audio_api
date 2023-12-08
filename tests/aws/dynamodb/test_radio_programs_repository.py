@@ -18,6 +18,21 @@ class TestRadioProgramsRepository(LocalStackContainerTest):
     def _empty_table(self):
         self.radio_programs_repository.delete_all()
 
+    def test_create_radio_program(self):
+        """Should successfully create a new RadioProgram."""
+        # When
+        created_program = self.radio_programs_repository.put_item(
+            item=self.create_program_model
+        )
+        created_program_dict = created_program.dict()
+
+        # Then
+        assert created_program.id is not None
+        assert all(
+            key in created_program_dict and created_program_dict[key] == value
+            for key, value in self.create_program_model.dict().items()
+        )
+
     def test_get_item(self):
         """Should retrieve an item from dynamodb."""
         # Given
