@@ -8,7 +8,10 @@ from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
-from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
+from audio_api.aws.dynamodb.exceptions import (
+    DynamoDbClientError,
+    DynamoDbPersistenceError,
+)
 from audio_api.aws.dynamodb.models import (
     DynamoDbItemModel,
     DynamoDbPutItemModel,
@@ -128,6 +131,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                 ScanIndexForward=False, KeyConditionExpression=key_condition
             )["Items"]
         # TODO: Test this Exception!
+        # Test after deleting table?
         except ClientError as e:
             logger.error(f"Failed to get_item {item_id} from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get item from DynamoDB: {e}")
@@ -160,7 +164,8 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             item: Item to be inserted in DynamoDB table.
 
         Raises:
-            DynamoDbClientError: If failed to store new item in DynamoDB.
+            DynamoDbClientError: If received client error from DynamoDB.
+            DynamoDbPersistenceError: If received error status code.
 
         Returns:
             ModelType: Retrieved item from DynamoDB.
@@ -170,14 +175,20 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         item_dict["id"] = item_id
 
         try:
-            self.table.put_item(Item=item_dict)
-        # TODO: Test this Exception!
+            response = self.table.put_item(Item=item_dict)
         except ClientError as e:
             logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to store new item in DynamoDB: {e}")
 
+        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+        if status != 200:
+            logger.error(
+                f"Failed to put_item {item.file_name} on {self.table_name} table."
+            )
+            raise DynamoDbPersistenceError(
+                f"Unsuccessful S3 put_object response. Status: {status}"
+            )
         logger.info(f"Successfully put_item {item_id} on {self.table_name} table.")
-        # TODO: Can model be read from response instead??
         return self.model(**item_dict)
 
     def update_item(self, item_id: UUID, item: UpdateItemModelType) -> type[ModelType]:
