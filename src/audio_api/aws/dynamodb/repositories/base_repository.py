@@ -182,9 +182,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 200:
-            logger.error(
-                f"Failed to put_item {item.file_name} on {self.table_name} table."
-            )
+            logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
             raise DynamoDbPersistenceError(
                 f"Unsuccessful S3 put_object response. Status: {status}"
             )

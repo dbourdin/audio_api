@@ -1,9 +1,20 @@
 """Test TestRadioProgramsRepository."""
-import pytest
+from unittest import mock
 
+import pytest
+from botocore.exceptions import ClientError
+
+from audio_api.aws.dynamodb.exceptions import (
+    DynamoDbClientError,
+    DynamoDbPersistenceError,
+)
 from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
 from audio_api.aws.dynamodb.repositories.radio_programs import RadioProgramsRepository
 from tests.aws.testcontainers.localstack import LocalStackContainerTest
+
+DYNAMODB_TABLE_MOCK_PATH = (
+    "audio_api.aws.dynamodb.repositories.radio_programs.radio_programs_repository.table"
+)
 
 
 @pytest.mark.usefixtures("radio_programs_repository")
@@ -32,6 +43,31 @@ class TestRadioProgramsRepository(LocalStackContainerTest):
             key in created_program_dict and created_program_dict[key] == value
             for key, value in self.create_program_model.dict().items()
         )
+
+    @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
+    def test_create_program_raises_dynamodb_client_error(self, table_mock: mock.patch):
+        """Should raise DynamoDbClientError if put_item raises ClientError."""
+        # When
+        table_mock.put_item.side_effect = ClientError(
+            error_response={"Error": {"Code": 500, "Message": "test_error"}},
+            operation_name="test_error",
+        )
+
+        # Then
+        with pytest.raises(DynamoDbClientError):
+            self.radio_programs_repository.put_item(item=self.create_program_model)
+
+    @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
+    def test_create_program_raises_dynamodb_persistence_error(
+        self, table_mock: mock.patch
+    ):
+        """Should raise DynamoDbPersistenceError if put_item status code is not 200."""
+        # When
+        table_mock.put_item.return_value = {"ResponseMetadata": {"HTTPStatsCode": 500}}
+
+        # Then
+        with pytest.raises(DynamoDbPersistenceError):
+            self.radio_programs_repository.put_item(item=self.create_program_model)
 
     def test_get_item(self):
         """Should retrieve an item from dynamodb."""
