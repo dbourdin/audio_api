@@ -242,8 +242,11 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
     def delete_all(self) -> None:
         """Delete all objects from dynamodb table."""
-        self.get_items()
+        scan = self.table.scan(
+            ProjectionExpression="#k",
+            ExpressionAttributeNames={"#k": "id"},
+        )
 
         with self.table.batch_writer() as batch:
-            for each in self.get_items():
+            for each in scan.get("Items", []):
                 batch.delete_item(Key=each)
