@@ -113,7 +113,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             "update_expression": update_expression,
         }
 
-    def get_item(self, item_id: UUID) -> type[ModelType]:
+    def get_item(self, item_id: UUID) -> ModelType:
         """Get a single DynamoDB item by item_id.
 
         Args:
@@ -149,7 +149,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         return self.model(**result_query[0])
 
-    def get_items(self) -> list[type[ModelType]]:
+    def get_items(self) -> list[ModelType]:
         """Get all DynamoDB items in the table.
 
         Raises:
@@ -173,7 +173,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         return [self.model(**item) for item in response.get("Items", [])]
 
-    def put_item(self, item: PutItemModelType) -> type[ModelType]:
+    def put_item(self, item: PutItemModelType) -> ModelType:
         """Create a new item to DynamoDB table.
 
         Args:
@@ -205,7 +205,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         logger.info(f"Successfully put_item {item_id} on {self.table_name} table.")
         return self.model(**item_dict)
 
-    def update_item(self, item_id: UUID, item: UpdateItemModelType) -> type[ModelType]:
+    def update_item(self, item_id: UUID, item: UpdateItemModelType) -> ModelType:
         """Update an existing item in DynamoDB table.
 
         Args:
