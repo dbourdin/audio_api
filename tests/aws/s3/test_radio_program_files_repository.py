@@ -47,7 +47,7 @@ def upload_file(request):
     return upload_file
 
 
-@pytest.mark.usefixtures("localstack_container")
+@pytest.mark.usefixtures("localstack")
 @pytest.mark.usefixtures("upload_file")
 class TestRadioProgramFilesRepository(unittest.TestCase):
     """TestRadioProgramFilesRepository class."""

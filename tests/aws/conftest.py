@@ -1,14 +1,11 @@
 """AWS fixtures."""
 import pytest
 
-from tests.aws.testcontainers.localstack import LocalStackContainer
-from tests.aws.testcontainers.localstack import (
-    localstack_container as localstack_container_,
-)
+from tests.aws.testcontainers.localstack import localstack_container
 
 
 @pytest.fixture(scope="session")
-def localstack_container(request) -> LocalStackContainer:
+def localstack(request):
     """Run LocalStack Container in a test session."""
-    with localstack_container_:
-        yield localstack_container_
+    with localstack_container:
+        yield localstack_container

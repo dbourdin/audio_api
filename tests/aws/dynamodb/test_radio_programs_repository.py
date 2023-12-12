@@ -17,7 +17,7 @@ DYNAMODB_TABLE_MOCK_PATH = (
 )
 
 
-@pytest.mark.usefixtures("localstack_container")
+@pytest.mark.usefixtures("localstack")
 @pytest.mark.usefixtures("radio_programs_repository")
 @pytest.mark.usefixtures("create_program_model")
 class TestRadioProgramsRepository(unittest.TestCase):
