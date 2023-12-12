@@ -1,12 +1,14 @@
 """Test TestRadioProgramsRepository."""
 import unittest
 from unittest import mock
+from uuid import uuid4
 
 import pytest
 from botocore.exceptions import ClientError
 
 from audio_api.aws.dynamodb.exceptions import (
     DynamoDbClientError,
+    DynamoDbItemNotFoundError,
     DynamoDbPersistenceError,
 )
 from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
@@ -82,3 +84,9 @@ class TestRadioProgramsRepository(unittest.TestCase):
 
         # Then
         assert db_radio_program == expected_radio_program
+
+    def test_get_item_raises_dynamodb_item_not_found_error(self):
+        """Should raise DynamoDbItemNotFoundError if item does not exist."""
+        # Then
+        with pytest.raises(DynamoDbItemNotFoundError):
+            self.radio_programs_repository.get_item(item_id=uuid4())
