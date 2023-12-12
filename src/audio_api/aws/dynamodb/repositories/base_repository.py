@@ -133,14 +133,12 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             response = self.table.query(
                 ScanIndexForward=False, KeyConditionExpression=key_condition
             )
-        # TODO: Test this Exception!
         # Test after deleting table?
         except ClientError as e:
             logger.error(f"Failed to get_item {item_id} from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get item from DynamoDB: {e}")
 
-        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-        if status != 200:
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
             logger.error(f"Failed to get_item {item_id} on {self.table_name} table.")
             raise DynamoDbStatusError(
                 f"Unsuccessful table.query response. Status: {status}"
@@ -193,12 +191,12 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to store new item in DynamoDB: {e}")
 
-        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-        if status != 200:
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
             logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
             raise DynamoDbStatusError(
                 f"Unsuccessful put_object response. Status: {status}"
             )
+
         logger.info(f"Successfully put_item {item_id} on {self.table_name} table.")
         return self.model(**item_dict)
 
@@ -251,15 +249,15 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             logger.error(f"Failed to delete_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to delete item from DynamoDB: {e}")
 
-        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-        if status == 200:
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
             logger.info(
                 f"Successfully delete_item {item_id} on {self.table_name} table."
             )
         else:
             # TODO: Should raise some exception??
             logger.error(
-                f"Failed to delete_item {item_id} from {self.table_name} table."
+                f"Failed to delete_item {item_id} from {self.table_name} table. "
+                f"Status: {status}"
             )
 
     def delete_all(self) -> None:
