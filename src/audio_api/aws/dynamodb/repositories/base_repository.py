@@ -113,7 +113,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             "update_expression": update_expression,
         }
 
-    def get_item(self, item_id: UUID) -> type[ModelType] | None:
+    def get_item(self, item_id: UUID) -> type[ModelType]:
         """Get a single DynamoDB item by item_id.
 
         Args:
@@ -124,7 +124,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             DynamoDbItemNotFoundError: If item_id does not exist.
 
         Returns:
-            Optional[ModelType]: The retrieved item.
+            ModelType: The retrieved item.
         """
         key_condition = Key("id").eq(str(item_id))
 
