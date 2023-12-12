@@ -133,7 +133,6 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             response = self.table.query(
                 ScanIndexForward=False, KeyConditionExpression=key_condition
             )
-        # Test after deleting table?
         except ClientError as e:
             logger.error(f"Failed to get_item {item_id} from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get item from DynamoDB: {e}")
