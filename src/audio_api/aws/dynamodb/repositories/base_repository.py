@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from audio_api.aws.dynamodb.exceptions import (
     DynamoDbClientError,
     DynamoDbItemNotFoundError,
-    DynamoDbPersistenceError,
+    DynamoDbStatusError,
 )
 from audio_api.aws.dynamodb.models import (
     DynamoDbItemModel,
@@ -122,6 +122,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         Raises:
             DynamoDbClientError: If failed to get item from DynamoDB.
             DynamoDbItemNotFoundError: If item_id does not exist.
+            DynamoDbStatusError: If received error status code.
 
         Returns:
             ModelType: The retrieved item.
@@ -129,15 +130,23 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         key_condition = Key("id").eq(str(item_id))
 
         try:
-            result_query = self.table.query(
+            response = self.table.query(
                 ScanIndexForward=False, KeyConditionExpression=key_condition
-            )["Items"]
+            )
         # TODO: Test this Exception!
         # Test after deleting table?
         except ClientError as e:
             logger.error(f"Failed to get_item {item_id} from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get item from DynamoDB: {e}")
 
+        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+        if status != 200:
+            logger.error(f"Failed to get_item {item_id} on {self.table_name} table.")
+            raise DynamoDbStatusError(
+                f"Unsuccessful table.query response. Status: {status}"
+            )
+
+        result_query = response.get("Items")
         if not result_query:
             raise DynamoDbItemNotFoundError(f"Item {item_id} does not exist.")
 
@@ -169,7 +178,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If received client error from DynamoDB.
-            DynamoDbPersistenceError: If received error status code.
+            DynamoDbStatusError: If received error status code.
 
         Returns:
             ModelType: Retrieved item from DynamoDB.
@@ -187,8 +196,8 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 200:
             logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
-            raise DynamoDbPersistenceError(
-                f"Unsuccessful S3 put_object response. Status: {status}"
+            raise DynamoDbStatusError(
+                f"Unsuccessful put_object response. Status: {status}"
             )
         logger.info(f"Successfully put_item {item_id} on {self.table_name} table.")
         return self.model(**item_dict)

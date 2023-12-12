@@ -15,7 +15,7 @@ from audio_api.api.schemas import (
 from audio_api.aws.dynamodb.exceptions import (
     DynamoDbClientError,
     DynamoDbItemNotFoundError,
-    DynamoDbPersistenceError,
+    DynamoDbStatusError,
 )
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from tests.api.test_utils import create_temp_file, radio_program
@@ -71,6 +71,26 @@ def test_get_program_raises_500_if_dynamodb_client_error(
     # Given
     get_program = radio_program("test program")
     radio_programs_mock.get.side_effect = DynamoDbClientError(
+        "Failed to get item from DynamoDB: test error"
+    )
+
+    # When
+    response = client.get(f"/programs/{get_program.id}")
+
+    # Then
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
+    radio_programs_mock.get.assert_called_once_with(program_id=get_program.id)
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_get_program_raises_500_if_dynamodb_status_error(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Get RadioProgram should raise 500 if DynamoDbStatusError."""
+    # Given
+    get_program = radio_program("test program")
+    radio_programs_mock.get.side_effect = DynamoDbStatusError(
         "Failed to get item from DynamoDB: test error"
     )
 
@@ -280,15 +300,15 @@ def test_create_program_raises_500_if_dynamodb_client_error(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
-def test_create_program_raises_500_if_dynamodb_persistence_error(
+def test_create_program_raises_500_if_dynamodb_status_error(
     radio_programs_mock,
     client: TestClient,
 ):
-    """Create RadioProgram should raise 500 if DynamoDbPersistenceError."""
+    """Create RadioProgram should raise 500 if DynamoDbStatusError."""
     # Given
     created_program = radio_program(title="Test program post")
     radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
-    radio_programs_mock.create.side_effect = DynamoDbPersistenceError(
+    radio_programs_mock.create.side_effect = DynamoDbStatusError(
         "Failed to store new item in DynamoDB: test error"
     )
 
@@ -494,15 +514,15 @@ def test_update_program_raises_500_if_dynamodb_client_error(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
-def test_update_program_raises_500_if_dynamodb_persistence_error(
+def test_update_program_raises_500_if_dynamodb_status_error(
     radio_programs_mock,
     client: TestClient,
 ):
-    """Update RadioProgram should raise 500 if DynamoDbPersistenceError."""
+    """Update RadioProgram should raise 500 if DynamoDbStatusError."""
     # Given
     updated_program = radio_program(title="Test program post")
     radio_program_in = RadioProgramCreateInSchema(**updated_program.dict())
-    radio_programs_mock.update.side_effect = DynamoDbPersistenceError(
+    radio_programs_mock.update.side_effect = DynamoDbStatusError(
         "Failed to store new item in DynamoDB: test error"
     )
 
