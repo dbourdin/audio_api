@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from audio_api.aws.dynamodb.exceptions import (
     DynamoDbClientError,
+    DynamoDbItemNotFoundError,
     DynamoDbPersistenceError,
 )
 from audio_api.aws.dynamodb.models import (
@@ -120,6 +121,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to get item from DynamoDB.
+            DynamoDbItemNotFoundError: If item_id does not exist.
 
         Returns:
             Optional[ModelType]: The retrieved item.
@@ -136,8 +138,10 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             logger.error(f"Failed to get_item {item_id} from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get item from DynamoDB: {e}")
 
-        if result_query:
-            return self.model(**result_query[0])
+        if not result_query:
+            raise DynamoDbItemNotFoundError(f"Item {item_id} does not exist.")
+
+        return self.model(**result_query[0])
 
     def get_items(self) -> list[type[ModelType]]:
         """Get all DynamoDB items in the table.

@@ -12,9 +12,11 @@ from audio_api.api.schemas import (
     RadioProgramUpdateInSchema,
     RadioProgramUpdateOutSchema,
 )
-from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
+from audio_api.aws.dynamodb.exceptions import (
+    DynamoDbClientError,
+    DynamoDbItemNotFoundError,
+)
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
-from audio_api.domain.exceptions import RadioProgramNotFoundError
 from tests.api.test_utils import create_temp_file, radio_program
 
 
@@ -47,7 +49,7 @@ def test_get_program_raises_404_if_not_found(
     """Get RadioProgram should raise 404 if RadioProgram does not exist."""
     # Given
     get_program = radio_program("test program get not found")
-    radio_programs_mock.get.side_effect = RadioProgramNotFoundError(
+    radio_programs_mock.get.side_effect = DynamoDbItemNotFoundError(
         f"RadioProgram with id {get_program.id} does not exist."
     )
 
@@ -366,7 +368,7 @@ def test_update_program_raises_404_if_not_found(
     # Given
     updated_program = radio_program(title="test_program_update")
     data_to_send = RadioProgramUpdateInSchema(**updated_program.dict())
-    radio_programs_mock.update.side_effect = RadioProgramNotFoundError(
+    radio_programs_mock.update.side_effect = DynamoDbItemNotFoundError(
         f"RadioProgram with id {updated_program.id} does not exist."
     )
 
@@ -490,7 +492,7 @@ def test_delete_program_raises_404_if_not_found(
     """Delete RadioProgram should raise 404 if RadioProgram does not exist."""
     # Given
     delete_program = radio_program("test program get not found")
-    radio_programs_mock.delete.side_effect = RadioProgramNotFoundError(
+    radio_programs_mock.delete.side_effect = DynamoDbItemNotFoundError(
         f"RadioProgram with id {delete_program.id} does not exist."
     )
 

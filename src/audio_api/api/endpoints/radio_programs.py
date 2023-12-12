@@ -15,9 +15,11 @@ from audio_api.api.schemas import (
     RadioProgramUpdateOutSchema,
 )
 from audio_api.api.schemas.utils import as_form
-from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
+from audio_api.aws.dynamodb.exceptions import (
+    DynamoDbClientError,
+    DynamoDbItemNotFoundError,
+)
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
-from audio_api.domain.exceptions import RadioProgramNotFoundError
 from audio_api.domain.radio_programs import RadioPrograms
 
 router = APIRouter()
@@ -51,7 +53,7 @@ async def get(
     """
     try:
         return RadioPrograms.get(program_id=program_id)
-    except RadioProgramNotFoundError:
+    except DynamoDbItemNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="RadioProgram not found.",
@@ -185,7 +187,7 @@ async def update(
         return RadioPrograms.update(
             program_id=program_id, new_program=program_in, program_file=program_file
         )
-    except RadioProgramNotFoundError:
+    except DynamoDbItemNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="RadioProgram not found.",
@@ -234,7 +236,7 @@ async def delete(
     """
     try:
         RadioPrograms.delete(program_id=program_id)
-    except RadioProgramNotFoundError:
+    except DynamoDbItemNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="RadioProgram not found.",

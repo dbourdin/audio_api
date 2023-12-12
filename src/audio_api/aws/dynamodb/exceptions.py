@@ -7,3 +7,7 @@ class DynamoDbClientError(Exception):
 
 class DynamoDbPersistenceError(Exception):
     """DynamoDbPersistenceError class to handle DynamoDB errors."""
+
+
+class DynamoDbItemNotFoundError(Exception):
+    """DynamoDbItemNotFoundError class to handle DynamoDB errors."""
