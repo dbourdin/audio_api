@@ -1,4 +1,5 @@
 """Test TestRadioProgramsRepository."""
+import unittest
 from unittest import mock
 
 import pytest
@@ -10,16 +11,16 @@ from audio_api.aws.dynamodb.exceptions import (
 )
 from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
 from audio_api.aws.dynamodb.repositories.radio_programs import RadioProgramsRepository
-from tests.aws.testcontainers.localstack import LocalStackContainerTest
 
 DYNAMODB_TABLE_MOCK_PATH = (
     "audio_api.aws.dynamodb.repositories.radio_programs.radio_programs_repository.table"
 )
 
 
+@pytest.mark.usefixtures("localstack_container")
 @pytest.mark.usefixtures("radio_programs_repository")
 @pytest.mark.usefixtures("create_program_model")
-class TestRadioProgramsRepository(LocalStackContainerTest):
+class TestRadioProgramsRepository(unittest.TestCase):
     """TestRadioProgramsRepository class."""
 
     radio_programs_repository: RadioProgramsRepository

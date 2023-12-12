@@ -1,5 +1,6 @@
 """Test RadioProgramFilesRepository."""
 import time
+import unittest
 from pathlib import Path
 from unittest import mock
 
@@ -17,7 +18,6 @@ from audio_api.aws.s3.models import S3CreateModel
 from audio_api.aws.s3.repositories import radio_program_files_repository
 from audio_api.settings import EnvironmentEnum
 from tests.api.test_utils import UploadFileModel, create_upload_file
-from tests.aws.testcontainers.localstack import LocalStackContainerTest
 
 TEST_AUDIO_FILE = Path(__file__).resolve().parent.joinpath("test_audio_file.mp3")
 S3_REPOSITORIES_PATH = "audio_api.aws.s3.repositories"
@@ -47,8 +47,9 @@ def upload_file(request):
     return upload_file
 
 
+@pytest.mark.usefixtures("localstack_container")
 @pytest.mark.usefixtures("upload_file")
-class TestRadioProgramFilesRepository(LocalStackContainerTest):
+class TestRadioProgramFilesRepository(unittest.TestCase):
     """TestRadioProgramFilesRepository class."""
 
     _radio_program_files_repository = radio_program_files_repository
