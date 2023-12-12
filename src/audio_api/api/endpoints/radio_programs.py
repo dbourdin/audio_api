@@ -18,6 +18,7 @@ from audio_api.api.schemas.utils import as_form
 from audio_api.aws.dynamodb.exceptions import (
     DynamoDbClientError,
     DynamoDbItemNotFoundError,
+    DynamoDbPersistenceError,
 )
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.domain.radio_programs import RadioPrograms
@@ -127,7 +128,7 @@ async def create(
         return RadioPrograms.create(
             radio_program=program_in, program_file=program_file.file
         )
-    except DynamoDbClientError:
+    except (DynamoDbClientError, DynamoDbPersistenceError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to store RadioProgram in the DB.",
@@ -192,7 +193,7 @@ async def update(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="RadioProgram not found.",
         )
-    except DynamoDbClientError:
+    except (DynamoDbClientError, DynamoDbPersistenceError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to store RadioProgram in the DB.",
