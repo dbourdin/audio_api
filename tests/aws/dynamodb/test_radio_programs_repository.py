@@ -30,7 +30,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
     def _empty_table(self):
         self.radio_programs_repository.delete_all()
 
-    def test_create_radio_program(self):
+    def test_put_item(self):
         """Should successfully create a new RadioProgram."""
         # When
         created_program = self.radio_programs_repository.put_item(
@@ -46,7 +46,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
         )
 
     @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
-    def test_create_program_raises_dynamodb_client_error(self, table_mock: mock.patch):
+    def test_put_item_raises_dynamodb_client_error(self, table_mock: mock.patch):
         """Should raise DynamoDbClientError if put_item raises ClientError."""
         # When
         table_mock.put_item.side_effect = ClientError(
@@ -59,9 +59,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
             self.radio_programs_repository.put_item(item=self.create_program_model)
 
     @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
-    def test_create_program_raises_dynamodb_persistence_error(
-        self, table_mock: mock.patch
-    ):
+    def test_put_item_raises_dynamodb_persistence_error(self, table_mock: mock.patch):
         """Should raise DynamoDbPersistenceError if put_item status code is not 200."""
         # When
         table_mock.put_item.return_value = {"ResponseMetadata": {"HTTPStatsCode": 500}}
