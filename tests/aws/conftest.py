@@ -9,6 +9,6 @@ from tests.aws.testcontainers.localstack import (
 
 @pytest.fixture(scope="session")
 def localstack_container(request) -> LocalStackContainer:
-    """Return a LocalStack Container."""
+    """Run LocalStack Container in a test session."""
     with localstack_container_:
         yield localstack_container_
