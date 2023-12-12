@@ -154,18 +154,24 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to get items from DynamoDB.
+            DynamoDbStatusError: If received error status code.
 
         Returns:
             list[ModelType]: List containing all received items.
         """
         try:
-            items = [self.model(**item) for item in self.table.scan().get("Items", [])]
-        # TODO: Test this Exception!
+            response = self.table.scan()
         except ClientError as e:
             logger.error(f"Failed to get_items from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get items from DynamoDB: {e}")
 
-        return items
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
+            logger.error(f"Failed to get_items on {self.table_name} table.")
+            raise DynamoDbStatusError(
+                f"Unsuccessful table.scan response. Status: {status}"
+            )
+
+        return [self.model(**item) for item in response.get("Items", [])]
 
     def put_item(self, item: PutItemModelType) -> type[ModelType]:
         """Create a new item to DynamoDB table.

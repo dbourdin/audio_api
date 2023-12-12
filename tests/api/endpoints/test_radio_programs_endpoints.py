@@ -166,6 +166,25 @@ def test_list_programs_raises_500_if_dynamodb_client_error(
 
 
 @mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_list_programs_raises_500_if_dynamodb_status_error(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Get RadioPrograms list should raise 500 if DynamoDbStatusError."""
+    # Given
+    radio_programs_mock.get_all.side_effect = DynamoDbStatusError(
+        "Failed to get items from DynamoDB: test error"
+    )
+
+    # When
+    response = client.get("/programs")
+
+    # Then
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
+    radio_programs_mock.get_all.assert_called_once()
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
 def test_create_program(
     radio_programs_mock,
     client: TestClient,

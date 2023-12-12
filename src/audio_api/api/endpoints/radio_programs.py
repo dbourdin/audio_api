@@ -85,7 +85,7 @@ def get_all() -> Any:
     """
     try:
         return RadioPrograms.get_all()
-    except DynamoDbClientError:
+    except (DynamoDbClientError, DynamoDbStatusError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve RadioPrograms from the DB.",
