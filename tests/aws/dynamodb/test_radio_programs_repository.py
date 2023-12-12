@@ -11,7 +11,10 @@ from audio_api.aws.dynamodb.exceptions import (
     DynamoDbItemNotFoundError,
     DynamoDbStatusError,
 )
-from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
+from audio_api.aws.dynamodb.models import (
+    RadioProgramPutItemModel,
+    RadioProgramUpdateItemModel,
+)
 from audio_api.aws.dynamodb.repositories.radio_programs import RadioProgramsRepository
 
 DYNAMODB_TABLE_MOCK_PATH = (
@@ -166,3 +169,23 @@ class TestRadioProgramsRepository(unittest.TestCase):
         # Then
         with pytest.raises(DynamoDbStatusError):
             self.radio_programs_repository.put_item(item=self.create_program_model)
+
+    def test_update_item(self):
+        """Should successfully update an existing RadioProgram."""
+        # Given
+        created_program = self.radio_programs_repository.put_item(
+            item=self.create_program_model
+        )
+
+        update_program_model = RadioProgramUpdateItemModel(**created_program.dict())
+        update_program_model.title = "updated program"
+        expected_program = created_program.copy(update=update_program_model.dict())
+
+        # When
+        updated_program = self.radio_programs_repository.update_item(
+            item_id=created_program.id, item=update_program_model
+        )
+
+        # Then
+        assert updated_program == expected_program
+        assert updated_program != created_program
