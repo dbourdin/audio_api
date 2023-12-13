@@ -247,3 +247,23 @@ class TestRadioProgramsRepository(unittest.TestCase):
                 item_id=item_id, item=update_program_model
             )
         table_mock.update_item.assert_called_once()
+
+    def test_delete_item(self):
+        """Should successfully delete an existing RadioProgram."""
+        # Given
+        created_program = self.radio_programs_repository.put_item(
+            item=self.create_program_model
+        )
+
+        # When
+        self.radio_programs_repository.delete_item(item_id=created_program.id)
+
+        # Then
+        with pytest.raises(DynamoDbItemNotFoundError):
+            self.radio_programs_repository.get_item(item_id=created_program.id)
+
+    def test_delete_raises_dynamo_db_item_not_found_error(self):
+        """Should raise DynamoDbItemNotFoundError if ."""
+        # Then
+        with pytest.raises(DynamoDbItemNotFoundError):
+            self.radio_programs_repository.delete_item(item_id=uuid4())
