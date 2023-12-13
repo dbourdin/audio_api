@@ -1,7 +1,10 @@
 """TestRadioProgramsRepository fixtures."""
 import pytest
 
-from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
+from audio_api.aws.dynamodb.models import (
+    RadioProgramPutItemModel,
+    RadioProgramUpdateItemModel,
+)
 from audio_api.aws.dynamodb.repositories.radio_programs import RadioProgramsRepository
 from audio_api.aws.dynamodb.repositories.radio_programs import (
     radio_programs_repository as db_repository,
@@ -17,6 +20,14 @@ def create_program_model(request) -> RadioProgramPutItemModel:
     )
     request.cls.create_program_model = put_item_model
     return put_item_model
+
+
+@pytest.fixture(scope="class")
+def update_program_model(request) -> RadioProgramUpdateItemModel:
+    """Return an RadioProgramUpdateItemModel instance."""
+    update_item_model = RadioProgramUpdateItemModel(title="updated program")
+    request.cls.update_program_model = update_item_model
+    return update_item_model
 
 
 @pytest.fixture(scope="class")
