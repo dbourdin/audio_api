@@ -214,6 +214,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to update item in DynamoDB.
+            DynamoDbStatusError: If received error status code.
 
         Returns:
             dict containing the updated solution.
@@ -221,7 +222,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         update_query = self._build_update_query_expression(item)
 
         try:
-            result = self.table.update_item(
+            response = self.table.update_item(
                 Key={"id": str(item_id)},
                 ConditionExpression="attribute_exists(id)",
                 ExpressionAttributeNames=update_query["attribute_names"],
@@ -229,13 +230,17 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                 UpdateExpression=update_query["update_expression"],
                 ReturnValues="ALL_NEW",
             )
-        # TODO: Test this Exception!
         except ClientError as e:
             logger.error(f"Failed to update_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to update item in DynamoDB: {e}")
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
+            logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
+            raise DynamoDbStatusError(
+                f"Unsuccessful put_object response. Status: {status}"
+            )
 
         logger.info(f"Successfully update_item {item_id} on {self.table_name} table.")
-        return self.model(**result["Attributes"])
+        return self.model(**response["Attributes"])
 
     def delete_item(self, item_id: UUID) -> None:
         """Delete an item from the DynamoDB table based on the provided id.
