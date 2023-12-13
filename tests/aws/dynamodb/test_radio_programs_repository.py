@@ -26,11 +26,13 @@ DYNAMODB_TABLE_MOCK_PATH = (
 @pytest.mark.usefixtures("localstack")
 @pytest.mark.usefixtures("radio_programs_repository")
 @pytest.mark.usefixtures("create_program_model")
+@pytest.mark.usefixtures("update_program_model")
 class TestRadioProgramsRepository(unittest.TestCase):
     """TestRadioProgramsRepository class."""
 
     radio_programs_repository: RadioProgramsRepository
     create_program_model: RadioProgramPutItemModel
+    update_program_model: RadioProgramUpdateItemModel
 
     @pytest.fixture(autouse=True)
     def _empty_table(self):
@@ -191,14 +193,13 @@ class TestRadioProgramsRepository(unittest.TestCase):
         created_program = self.radio_programs_repository.put_item(
             item=self.create_program_model
         )
-
-        update_program_model = RadioProgramUpdateItemModel(**created_program.dict())
-        update_program_model.title = "updated program"
-        expected_program = created_program.copy(update=update_program_model.dict())
+        expected_program = created_program.copy(
+            update=self.update_program_model.dict(exclude_none=True)
+        )
 
         # When
         updated_program = self.radio_programs_repository.update_item(
-            item_id=created_program.id, item=update_program_model
+            item_id=created_program.id, item=self.update_program_model
         )
 
         # Then
@@ -209,14 +210,11 @@ class TestRadioProgramsRepository(unittest.TestCase):
         """Should raise DynamoDbItemNotFoundError if RadioProgram does not exist."""
         # Given
         item_id = uuid4()
-        update_program_model = RadioProgramUpdateItemModel(
-            **self.create_program_model.dict()
-        )
 
         # Then
         with pytest.raises(DynamoDbItemNotFoundError):
             self.radio_programs_repository.update_item(
-                item_id=item_id, item=update_program_model
+                item_id=item_id, item=self.update_program_model
             )
 
     @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
@@ -224,9 +222,6 @@ class TestRadioProgramsRepository(unittest.TestCase):
         """Should raise DynamoDbClientError if update_item raises ClientError."""
         # Given
         item_id = uuid4()
-        update_program_model = RadioProgramUpdateItemModel(
-            **self.create_program_model.dict()
-        )
 
         # When
         table_mock.update_item.side_effect = ClientError(
@@ -237,7 +232,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
         # Then
         with pytest.raises(DynamoDbClientError):
             self.radio_programs_repository.update_item(
-                item_id=item_id, item=update_program_model
+                item_id=item_id, item=self.update_program_model
             )
         table_mock.update_item.assert_called_once()
 
@@ -246,9 +241,6 @@ class TestRadioProgramsRepository(unittest.TestCase):
         """Should raise DynamoDbStatusError if update_item status code is not 200."""
         # Given
         item_id = uuid4()
-        update_program_model = RadioProgramUpdateItemModel(
-            **self.create_program_model.dict()
-        )
 
         # When
         table_mock.update_item.return_value = {
@@ -258,7 +250,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
         # Then
         with pytest.raises(DynamoDbStatusError):
             self.radio_programs_repository.update_item(
-                item_id=item_id, item=update_program_model
+                item_id=item_id, item=self.update_program_model
             )
         table_mock.update_item.assert_called_once()
 
@@ -281,3 +273,40 @@ class TestRadioProgramsRepository(unittest.TestCase):
         # Then
         with pytest.raises(DynamoDbItemNotFoundError):
             self.radio_programs_repository.delete_item(item_id=uuid4())
+
+    @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
+    def test_delete_item_raises_dynamodb_client_error(self, table_mock: mock.patch):
+        """Should raise DynamoDbClientError if delete_item raises ClientError."""
+        # Given
+        item_id = uuid4()
+
+        # When
+        table_mock.delete_item.side_effect = ClientError(
+            error_response={"Error": {"Code": 500, "Message": "test_error"}},
+            operation_name="test_error",
+        )
+
+        # Then
+        with pytest.raises(DynamoDbClientError):
+            self.radio_programs_repository.delete_item(item_id=item_id)
+        table_mock.delete_item.assert_called_once_with(
+            Key={"id": str(item_id)}, ConditionExpression="attribute_exists(id)"
+        )
+
+    @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
+    def test_delete_item_raises_dynamodb_status_error(self, table_mock: mock.patch):
+        """Should raise DynamoDbStatusError if delete_item status code is not 200."""
+        # Given
+        item_id = uuid4()
+
+        # When
+        table_mock.delete_item.return_value = {
+            "ResponseMetadata": {"HTTPStatsCode": 500}
+        }
+
+        # Then
+        with pytest.raises(DynamoDbStatusError):
+            self.radio_programs_repository.delete_item(item_id=item_id)
+        table_mock.delete_item.assert_called_once_with(
+            Key={"id": str(item_id)}, ConditionExpression="attribute_exists(id)"
+        )
