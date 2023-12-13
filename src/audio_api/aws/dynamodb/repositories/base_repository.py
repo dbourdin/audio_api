@@ -250,11 +250,15 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to delete item from DynamoDB.
+            DynamoDbItemNotFoundError: If item_id does not exist.
         """
         try:
             response = self.table.delete_item(
                 Key={"id": str(item_id)}, ConditionExpression="attribute_exists(id)"
             )
+        except self.dynamodb_client.exceptions.ConditionalCheckFailedException:
+            logger.error(f"Failed to delete_item {item_id} on {self.table_name} table")
+            raise DynamoDbItemNotFoundError(f"Item {item_id} does not exist.")
         except ClientError as e:
             logger.error(f"Failed to delete_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to delete item from DynamoDB: {e}")
