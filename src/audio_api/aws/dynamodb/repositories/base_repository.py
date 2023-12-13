@@ -88,7 +88,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                     return {k: _parse_value(v) for k, v in val.items() if v}
                 return val
 
-            return _parse_value(item.dict())
+            return _parse_value(item.dict(exclude_none=True))
 
         update_item_dict = _build_update_item_dict(update_item)
         attributes = {
@@ -255,6 +255,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         Raises:
             DynamoDbClientError: If failed to delete item from DynamoDB.
             DynamoDbItemNotFoundError: If item_id does not exist.
+            DynamoDbStatusError: If received error status code.
         """
         try:
             response = self.table.delete_item(
@@ -267,16 +268,15 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             logger.error(f"Failed to delete_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to delete item from DynamoDB: {e}")
 
-        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
-            logger.info(
-                f"Successfully delete_item {item_id} on {self.table_name} table."
-            )
-        else:
-            # TODO: Should raise some exception??
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
             logger.error(
-                f"Failed to delete_item {item_id} from {self.table_name} table. "
-                f"Status: {status}"
+                f"Failed to delete_item {item_id} from {self.table_name} table."
             )
+            raise DynamoDbStatusError(
+                f"Unsuccessful delete_item response. Status: {status}"
+            )
+
+        logger.info(f"Successfully delete_item {item_id} on {self.table_name} table.")
 
     def delete_all(self) -> None:
         """Delete all objects from dynamodb table."""
