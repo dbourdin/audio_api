@@ -242,7 +242,7 @@ async def delete(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="RadioProgram not found.",
         )
-    except DynamoDbClientError:
+    except (DynamoDbClientError, DynamoDbStatusError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete RadioProgram from the DB.",

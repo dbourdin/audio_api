@@ -614,3 +614,23 @@ def test_delete_program_raises_500_dynamodb_client_error(
     # Then
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
     radio_programs_mock.delete.assert_called_once_with(program_id=delete_program.id)
+
+
+@mock.patch("audio_api.api.endpoints.radio_programs.RadioPrograms")
+def test_delete_program_raises_500_dynamodb_status_error(
+    radio_programs_mock,
+    client: TestClient,
+):
+    """Delete RadioProgram should raise 500 if DynamoDbStatusError."""
+    # Given
+    delete_program = radio_program("test program get not found")
+    radio_programs_mock.delete.side_effect = DynamoDbStatusError(
+        "Failed to delete item from DynamoDB: test error"
+    )
+
+    # When
+    response = client.delete(f"/programs/{delete_program.id}")
+
+    # Then
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
+    radio_programs_mock.delete.assert_called_once_with(program_id=delete_program.id)
