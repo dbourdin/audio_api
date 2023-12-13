@@ -12,7 +12,6 @@ from audio_api.aws.dynamodb.repositories import radio_programs_repository
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.aws.s3.models import RadioProgramFileCreate
 from audio_api.aws.s3.repositories import radio_program_files_repository
-from audio_api.domain.exceptions import RadioProgramNotFoundError
 from audio_api.domain.models import RadioProgramModel
 
 
@@ -45,19 +44,10 @@ class RadioPrograms:
         Args:
             program_id: program_id of the RadioProgram to retrieve.
 
-        Raises:
-            RadioProgramNotFoundError: If the RadioProgram is not found.
-
         Returns:
             RadioProgramModel: Model containing stored data.
         """
-        radio_program = cls.radio_programs_repository.get_item(item_id=program_id)
-        if not radio_program:
-            raise RadioProgramNotFoundError(
-                f"RadioProgram with id {program_id} does not exist."
-            )
-
-        return radio_program
+        return cls.radio_programs_repository.get_item(item_id=program_id)
 
     @classmethod
     def get_all(cls) -> list[RadioProgramModel]:

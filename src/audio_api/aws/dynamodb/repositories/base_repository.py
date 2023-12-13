@@ -8,7 +8,11 @@ from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
-from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
+from audio_api.aws.dynamodb.exceptions import (
+    DynamoDbClientError,
+    DynamoDbItemNotFoundError,
+    DynamoDbStatusError,
+)
 from audio_api.aws.dynamodb.models import (
     DynamoDbItemModel,
     DynamoDbPutItemModel,
@@ -84,7 +88,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                     return {k: _parse_value(v) for k, v in val.items() if v}
                 return val
 
-            return _parse_value(item.dict())
+            return _parse_value(item.dict(exclude_none=True))
 
         update_item_dict = _build_update_item_dict(update_item)
         attributes = {
@@ -109,7 +113,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             "update_expression": update_expression,
         }
 
-    def get_item(self, item_id: UUID) -> type[ModelType] | None:
+    def get_item(self, item_id: UUID) -> ModelType:
         """Get a single DynamoDB item by item_id.
 
         Args:
@@ -117,50 +121,67 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to get item from DynamoDB.
+            DynamoDbItemNotFoundError: If item_id does not exist.
+            DynamoDbStatusError: If received error status code.
 
         Returns:
-            Optional[ModelType]: The retrieved item.
+            ModelType: The retrieved item.
         """
         key_condition = Key("id").eq(str(item_id))
 
         try:
-            result_query = self.table.query(
+            response = self.table.query(
                 ScanIndexForward=False, KeyConditionExpression=key_condition
-            )["Items"]
-        # TODO: Test this Exception!
+            )
         except ClientError as e:
             logger.error(f"Failed to get_item {item_id} from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get item from DynamoDB: {e}")
 
-        if result_query:
-            return self.model(**result_query[0])
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
+            logger.error(f"Failed to get_item {item_id} on {self.table_name} table.")
+            raise DynamoDbStatusError(
+                f"Unsuccessful table.query response. Status: {status}"
+            )
 
-    def get_items(self) -> list[type[ModelType]]:
+        result_query = response.get("Items")
+        if not result_query:
+            raise DynamoDbItemNotFoundError(f"Item {item_id} does not exist.")
+
+        return self.model(**result_query[0])
+
+    def get_items(self) -> list[ModelType]:
         """Get all DynamoDB items in the table.
 
         Raises:
             DynamoDbClientError: If failed to get items from DynamoDB.
+            DynamoDbStatusError: If received error status code.
 
         Returns:
             list[ModelType]: List containing all received items.
         """
         try:
-            items = [self.model(**item) for item in self.table.scan().get("Items", [])]
-        # TODO: Test this Exception!
+            response = self.table.scan()
         except ClientError as e:
             logger.error(f"Failed to get_items from {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to get items from DynamoDB: {e}")
 
-        return items
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
+            logger.error(f"Failed to get_items on {self.table_name} table.")
+            raise DynamoDbStatusError(
+                f"Unsuccessful table.scan response. Status: {status}"
+            )
 
-    def put_item(self, item: PutItemModelType) -> type[ModelType]:
+        return [self.model(**item) for item in response.get("Items", [])]
+
+    def put_item(self, item: PutItemModelType) -> ModelType:
         """Create a new item to DynamoDB table.
 
         Args:
             item: Item to be inserted in DynamoDB table.
 
         Raises:
-            DynamoDbClientError: If failed to store new item in DynamoDB.
+            DynamoDbClientError: If received client error from DynamoDB.
+            DynamoDbStatusError: If received error status code.
 
         Returns:
             ModelType: Retrieved item from DynamoDB.
@@ -170,17 +191,21 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         item_dict["id"] = item_id
 
         try:
-            self.table.put_item(Item=item_dict)
-        # TODO: Test this Exception!
+            response = self.table.put_item(Item=item_dict)
         except ClientError as e:
             logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to store new item in DynamoDB: {e}")
 
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
+            logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
+            raise DynamoDbStatusError(
+                f"Unsuccessful put_object response. Status: {status}"
+            )
+
         logger.info(f"Successfully put_item {item_id} on {self.table_name} table.")
-        # TODO: Can model be read from response instead??
         return self.model(**item_dict)
 
-    def update_item(self, item_id: UUID, item: UpdateItemModelType) -> type[ModelType]:
+    def update_item(self, item_id: UUID, item: UpdateItemModelType) -> ModelType:
         """Update an existing item in DynamoDB table.
 
         Args:
@@ -189,6 +214,8 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to update item in DynamoDB.
+            DynamoDbItemNotFoundError: If item_id does not exist.
+            DynamoDbStatusError: If received error status code.
 
         Returns:
             dict containing the updated solution.
@@ -196,7 +223,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         update_query = self._build_update_query_expression(item)
 
         try:
-            result = self.table.update_item(
+            response = self.table.update_item(
                 Key={"id": str(item_id)},
                 ConditionExpression="attribute_exists(id)",
                 ExpressionAttributeNames=update_query["attribute_names"],
@@ -204,13 +231,20 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                 UpdateExpression=update_query["update_expression"],
                 ReturnValues="ALL_NEW",
             )
-        # TODO: Test this Exception!
+        except self.dynamodb_client.exceptions.ConditionalCheckFailedException:
+            logger.error(f"Item {item_id} does not exist.")
+            raise DynamoDbItemNotFoundError(f"Item {item_id} does not exist.")
         except ClientError as e:
             logger.error(f"Failed to update_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to update item in DynamoDB: {e}")
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
+            logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
+            raise DynamoDbStatusError(
+                f"Unsuccessful put_object response. Status: {status}"
+            )
 
         logger.info(f"Successfully update_item {item_id} on {self.table_name} table.")
-        return self.model(**result["Attributes"])
+        return self.model(**response["Attributes"])
 
     def delete_item(self, item_id: UUID) -> None:
         """Delete an item from the DynamoDB table based on the provided id.
@@ -220,22 +254,37 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to delete item from DynamoDB.
+            DynamoDbItemNotFoundError: If item_id does not exist.
+            DynamoDbStatusError: If received error status code.
         """
         try:
             response = self.table.delete_item(
                 Key={"id": str(item_id)}, ConditionExpression="attribute_exists(id)"
             )
+        except self.dynamodb_client.exceptions.ConditionalCheckFailedException:
+            logger.error(f"Item {item_id} does not exist.")
+            raise DynamoDbItemNotFoundError(f"Item {item_id} does not exist.")
         except ClientError as e:
             logger.error(f"Failed to delete_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to delete item from DynamoDB: {e}")
 
-        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-        if status == 200:
-            logger.info(
-                f"Successfully delete_item {item_id} on {self.table_name} table."
-            )
-        else:
-            # TODO: Should raise some exception??
+        if status := response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
             logger.error(
                 f"Failed to delete_item {item_id} from {self.table_name} table."
             )
+            raise DynamoDbStatusError(
+                f"Unsuccessful delete_item response. Status: {status}"
+            )
+
+        logger.info(f"Successfully delete_item {item_id} on {self.table_name} table.")
+
+    def delete_all(self) -> None:
+        """Delete all objects from dynamodb table."""
+        scan = self.table.scan(
+            ProjectionExpression="#k",
+            ExpressionAttributeNames={"#k": "id"},
+        )
+
+        with self.table.batch_writer() as batch:
+            for each in scan.get("Items", []):
+                batch.delete_item(Key=each)
