@@ -4,6 +4,7 @@ from unittest import mock
 from uuid import uuid4
 
 import pytest
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
 from audio_api.aws.dynamodb.exceptions import (
@@ -54,6 +55,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
     def test_get_item_raises_dynamodb_client_error(self, table_mock: mock.patch):
         """Should raise DynamoDbClientError if table.query raises ClientError."""
         # When
+        item_id = uuid4()
         table_mock.query.side_effect = ClientError(
             error_response={"Error": {"Code": 500, "Message": "test_error"}},
             operation_name="test_error",
@@ -61,17 +63,26 @@ class TestRadioProgramsRepository(unittest.TestCase):
 
         # Then
         with pytest.raises(DynamoDbClientError):
-            self.radio_programs_repository.get_item(item_id=uuid4())
+            self.radio_programs_repository.get_item(item_id=item_id)
+        table_mock.query.assert_called_once_with(
+            ScanIndexForward=False, KeyConditionExpression=Key("id").eq(str(item_id))
+        )
 
     @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
     def test_get_item_raises_dynamodb_status_error(self, table_mock: mock.patch):
         """Should raise DynamoDbStatusError if table.query status code is not 200."""
+        # Given
+        item_id = uuid4()
+
         # When
         table_mock.query.return_value = {"ResponseMetadata": {"HTTPStatsCode": 500}}
 
         # Then
         with pytest.raises(DynamoDbStatusError):
-            self.radio_programs_repository.get_item(item_id=uuid4())
+            self.radio_programs_repository.get_item(item_id=item_id)
+        table_mock.query.assert_called_once_with(
+            ScanIndexForward=False, KeyConditionExpression=Key("id").eq(str(item_id))
+        )
 
     def test_get_item_raises_dynamodb_item_not_found_error(self):
         """Should raise DynamoDbItemNotFoundError if item does not exist."""
@@ -121,6 +132,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
         # Then
         with pytest.raises(DynamoDbClientError):
             self.radio_programs_repository.get_items()
+        table_mock.scan.assert_called_once()
 
     @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
     def test_get_items_raises_dynamodb_status_error(self, table_mock: mock.patch):
@@ -131,6 +143,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
         # Then
         with pytest.raises(DynamoDbStatusError):
             self.radio_programs_repository.get_items()
+        table_mock.scan.assert_called_once()
 
     def test_put_item(self):
         """Should successfully create a new RadioProgram."""
@@ -159,6 +172,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
         # Then
         with pytest.raises(DynamoDbClientError):
             self.radio_programs_repository.put_item(item=self.create_program_model)
+        table_mock.put_item.assert_called_once()
 
     @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
     def test_put_item_raises_dynamodb_status_error(self, table_mock: mock.patch):
@@ -169,6 +183,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
         # Then
         with pytest.raises(DynamoDbStatusError):
             self.radio_programs_repository.put_item(item=self.create_program_model)
+        table_mock.put_item.assert_called_once()
 
     def test_update_item(self):
         """Should successfully update an existing RadioProgram."""
@@ -189,3 +204,46 @@ class TestRadioProgramsRepository(unittest.TestCase):
         # Then
         assert updated_program == expected_program
         assert updated_program != created_program
+
+    @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
+    def test_update_item_raises_dynamodb_client_error(self, table_mock: mock.patch):
+        """Should raise DynamoDbClientError if update_item raises ClientError."""
+        # Given
+        item_id = uuid4()
+        update_program_model = RadioProgramUpdateItemModel(
+            **self.create_program_model.dict()
+        )
+
+        # When
+        table_mock.update_item.side_effect = ClientError(
+            error_response={"Error": {"Code": 500, "Message": "test_error"}},
+            operation_name="test_error",
+        )
+
+        # Then
+        with pytest.raises(DynamoDbClientError):
+            self.radio_programs_repository.update_item(
+                item_id=item_id, item=update_program_model
+            )
+        table_mock.update_item.assert_called_once()
+
+    @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
+    def test_update_item_raises_dynamodb_status_error(self, table_mock: mock.patch):
+        """Should raise DynamoDbStatusError if update_item status code is not 200."""
+        # Given
+        item_id = uuid4()
+        update_program_model = RadioProgramUpdateItemModel(
+            **self.create_program_model.dict()
+        )
+
+        # When
+        table_mock.update_item.return_value = {
+            "ResponseMetadata": {"HTTPStatsCode": 500}
+        }
+
+        # Then
+        with pytest.raises(DynamoDbStatusError):
+            self.radio_programs_repository.update_item(
+                item_id=item_id, item=update_program_model
+            )
+        table_mock.update_item.assert_called_once()
