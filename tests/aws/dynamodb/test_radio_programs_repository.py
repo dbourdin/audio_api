@@ -85,7 +85,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
         )
 
     def test_get_item_raises_dynamodb_item_not_found_error(self):
-        """Should raise DynamoDbItemNotFoundError if item does not exist."""
+        """Should raise DynamoDbItemNotFoundError if RadioProgram does not exist."""
         # Then
         with pytest.raises(DynamoDbItemNotFoundError):
             self.radio_programs_repository.get_item(item_id=uuid4())
@@ -205,6 +205,20 @@ class TestRadioProgramsRepository(unittest.TestCase):
         assert updated_program == expected_program
         assert updated_program != created_program
 
+    def test_update_item_raises_dynamo_db_item_not_found_error(self):
+        """Should raise DynamoDbItemNotFoundError if RadioProgram does not exist."""
+        # Given
+        item_id = uuid4()
+        update_program_model = RadioProgramUpdateItemModel(
+            **self.create_program_model.dict()
+        )
+
+        # Then
+        with pytest.raises(DynamoDbItemNotFoundError):
+            self.radio_programs_repository.update_item(
+                item_id=item_id, item=update_program_model
+            )
+
     @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
     def test_update_item_raises_dynamodb_client_error(self, table_mock: mock.patch):
         """Should raise DynamoDbClientError if update_item raises ClientError."""
@@ -263,7 +277,7 @@ class TestRadioProgramsRepository(unittest.TestCase):
             self.radio_programs_repository.get_item(item_id=created_program.id)
 
     def test_delete_raises_dynamo_db_item_not_found_error(self):
-        """Should raise DynamoDbItemNotFoundError if ."""
+        """Should raise DynamoDbItemNotFoundError if RadioProgram does not exist."""
         # Then
         with pytest.raises(DynamoDbItemNotFoundError):
             self.radio_programs_repository.delete_item(item_id=uuid4())

@@ -214,6 +214,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
 
         Raises:
             DynamoDbClientError: If failed to update item in DynamoDB.
+            DynamoDbItemNotFoundError: If item_id does not exist.
             DynamoDbStatusError: If received error status code.
 
         Returns:
@@ -230,6 +231,9 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                 UpdateExpression=update_query["update_expression"],
                 ReturnValues="ALL_NEW",
             )
+        except self.dynamodb_client.exceptions.ConditionalCheckFailedException:
+            logger.error(f"Item {item_id} does not exist.")
+            raise DynamoDbItemNotFoundError(f"Item {item_id} does not exist.")
         except ClientError as e:
             logger.error(f"Failed to update_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to update item in DynamoDB: {e}")
@@ -257,7 +261,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                 Key={"id": str(item_id)}, ConditionExpression="attribute_exists(id)"
             )
         except self.dynamodb_client.exceptions.ConditionalCheckFailedException:
-            logger.error(f"Failed to delete_item {item_id} on {self.table_name} table")
+            logger.error(f"Item {item_id} does not exist.")
             raise DynamoDbItemNotFoundError(f"Item {item_id} does not exist.")
         except ClientError as e:
             logger.error(f"Failed to delete_item {item_id} on {self.table_name} table.")
