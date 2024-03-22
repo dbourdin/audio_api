@@ -1,10 +1,12 @@
 """Test TestRadioProgramsDomain."""
 
 import unittest
+from unittest import mock
 
 import pytest
 
 from audio_api.api.schemas import RadioProgramCreateInSchema
+from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
 from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
 from audio_api.aws.dynamodb.repositories.radio_programs import RadioProgramsRepository
 from audio_api.aws.s3.repositories.radio_program_files import (
@@ -12,6 +14,13 @@ from audio_api.aws.s3.repositories.radio_program_files import (
 )
 from audio_api.domain.radio_programs import RadioPrograms
 from tests.api.test_utils import UploadFileModel
+
+RADIO_PROGRAMS_REPOSITORY_PATH = (
+    "audio_api.domain.radio_programs.RadioPrograms.radio_programs_repository"
+)
+RADIO_PROGRAMS_REPOSITORY_PUT_ITEM_MOCK_PATCH = (
+    f"{RADIO_PROGRAMS_REPOSITORY_PATH}.put_item"
+)
 
 
 @pytest.mark.usefixtures("localstack")
@@ -51,6 +60,26 @@ class TestRadioProgramsDomain(unittest.TestCase):
         assert db_radio_program.air_date == radio_program_in.air_date
         assert db_radio_program.spotify_playlist == radio_program_in.spotify_playlist
         assert uploaded_object.read() == radio_program_file.file_content
+
+    @mock.patch(RADIO_PROGRAMS_REPOSITORY_PUT_ITEM_MOCK_PATCH)
+    def test_create_radio_program_raises_dynamo_db_client_error(
+        self, put_item_mock: mock.patch
+    ):
+        """Should raise DynamoDbClientError if fails to store file in S3."""
+        # Given
+        radio_program_in = RadioProgramCreateInSchema(
+            **self.create_program_model.dict()
+        )
+        radio_program_file = self.upload_file
+
+        # When
+        put_item_mock.side_effect = DynamoDbClientError("Test error")
+
+        # Then
+        with pytest.raises(DynamoDbClientError):
+            self.radio_programs.create(
+                radio_program=radio_program_in, program_file=radio_program_file.file
+            )
 
     def test_get_radio_program(self):
         """Should retrieve an existing RadioProgram."""
