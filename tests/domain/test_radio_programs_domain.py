@@ -64,3 +64,24 @@ class TestRadioProgramsDomain(unittest.TestCase):
 
         # Then
         assert db_radio_program == created_radio_program
+
+    def test_get_all_radio_programs(self):
+        """Should retrieve an existing RadioProgram."""
+        # Given
+        radio_program_1 = self.create_program_model.copy()
+        radio_program_2 = self.create_program_model.copy()
+        radio_program_2.title = "test program 2"
+        radio_program_2.description = "test program 2"
+        created_radio_program_1 = self.radio_programs_repository.put_item(
+            radio_program_1
+        )
+        created_radio_program_2 = self.radio_programs_repository.put_item(
+            radio_program_2
+        )
+
+        # When
+        db_radio_programs = self.radio_programs.get_all()
+
+        # Then
+        assert created_radio_program_1 in db_radio_programs
+        assert created_radio_program_2 in db_radio_programs
