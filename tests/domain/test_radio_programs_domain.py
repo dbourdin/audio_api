@@ -6,7 +6,10 @@ from unittest import mock
 import pytest
 
 from audio_api.api.schemas import RadioProgramCreateInSchema, RadioProgramUpdateInSchema
-from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
+from audio_api.aws.dynamodb.exceptions import (
+    DynamoDbClientError,
+    DynamoDbItemNotFoundError,
+)
 from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
 from audio_api.aws.dynamodb.repositories.radio_programs import RadioProgramsRepository
 from audio_api.aws.s3.exceptions import S3FileNotFoundError
@@ -225,3 +228,25 @@ class TestRadioProgramsDomain(unittest.TestCase):
             )
 
         assert self.radio_program_files_repository.list_objects() == []
+
+    def test_delete_radio_program(self):
+        """Should delete an existing radio program."""
+        # Given
+        radio_program_in = RadioProgramCreateInSchema(
+            **self.create_program_model.dict()
+        )
+        radio_program_file = self.upload_file
+        db_radio_program = self.radio_programs.create(
+            radio_program=radio_program_in, program_file=radio_program_file.file
+        )
+
+        # When
+        self.radio_programs.delete(program_id=db_radio_program.id)
+
+        # Then
+        with pytest.raises(DynamoDbItemNotFoundError):
+            self.radio_programs.get(program_id=db_radio_program.id)
+        with pytest.raises(S3FileNotFoundError):
+            self.radio_program_files_repository.get_object(
+                object_key=db_radio_program.radio_program.file_name
+            )
