@@ -33,6 +33,7 @@ RADIO_PROGRAMS_REPOSITORY_UPDATE_ITEM_MOCK_PATCH = (
 @pytest.mark.usefixtures("radio_program_files_repository")
 @pytest.mark.usefixtures("create_program_model")
 @pytest.mark.usefixtures("upload_file")
+@pytest.mark.usefixtures("new_upload_file")
 class TestRadioProgramsDomain(unittest.TestCase):
     """TestRadioProgramsDomain class."""
 
@@ -41,6 +42,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
     radio_program_files_repository: RadioProgramFilesRepository
     create_program_model: RadioProgramPutItemModel
     upload_file: UploadFileModel
+    new_upload_file: UploadFileModel
 
     @pytest.fixture(autouse=True)
     def _empty_bucket(self):
@@ -155,7 +157,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
             **self.create_program_model.dict()
         )
         radio_program_file = self.upload_file
-        new_radio_program_file = self.upload_file
+        new_radio_program_file = self.new_upload_file
         created_radio_program = self.radio_programs.create(
             radio_program=radio_program_in, program_file=radio_program_file.file
         )
@@ -173,8 +175,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
 
         # Then
         assert update_program.title in updated_program.radio_program.file_name
-        # TODO: Fixme new_radio_program_file
-        assert uploaded_object.read() is True
+        assert uploaded_object.read() == new_radio_program_file.file_content
         with pytest.raises(S3FileNotFoundError):
             self.radio_program_files_repository.get_object(
                 created_radio_program.radio_program.file_name

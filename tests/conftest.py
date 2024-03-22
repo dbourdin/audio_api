@@ -67,3 +67,11 @@ def upload_file(request):
     upload_file = create_upload_file(TEST_AUDIO_FILE)
     request.cls.upload_file = upload_file
     return upload_file
+
+
+@pytest.fixture(scope="class")
+def new_upload_file(request):
+    """Return an UploadFileModel instance."""
+    new_upload_file = create_upload_file(TEST_AUDIO_FILE)
+    request.cls.new_upload_file = new_upload_file
+    return new_upload_file
