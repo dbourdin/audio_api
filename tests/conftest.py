@@ -61,7 +61,7 @@ def create_program_model(request) -> RadioProgramPutItemModel:
     return put_item_model
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture
 def upload_file(request):
     """Return an UploadFileModel instance."""
     upload_file = create_upload_file(TEST_AUDIO_FILE)
@@ -69,7 +69,7 @@ def upload_file(request):
     return upload_file
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture
 def new_upload_file(request):
     """Return an UploadFileModel instance."""
     new_upload_file = create_upload_file(TEST_AUDIO_FILE)

@@ -12,21 +12,30 @@ from audio_api.aws.dynamodb.exceptions import (
 )
 from audio_api.aws.dynamodb.models import RadioProgramPutItemModel
 from audio_api.aws.dynamodb.repositories.radio_programs import RadioProgramsRepository
-from audio_api.aws.s3.exceptions import S3FileNotFoundError
+from audio_api.aws.s3.exceptions import (
+    S3ClientError,
+    S3FileNotFoundError,
+    S3PersistenceError,
+)
 from audio_api.aws.s3.repositories.radio_program_files import (
     RadioProgramFilesRepository,
 )
 from audio_api.domain.radio_programs import RadioPrograms
 from tests.api.test_utils import UploadFileModel
 
-RADIO_PROGRAMS_REPOSITORY_PATH = (
-    "audio_api.domain.radio_programs.RadioPrograms.radio_programs_repository"
-)
+RADIO_PROGRAMS_PATH = "audio_api.domain.radio_programs.RadioPrograms"
+RADIO_PROGRAMS_REPOSITORY_PATH = f"{RADIO_PROGRAMS_PATH}.radio_programs_repository"
 RADIO_PROGRAMS_REPOSITORY_PUT_ITEM_MOCK_PATCH = (
     f"{RADIO_PROGRAMS_REPOSITORY_PATH}.put_item"
 )
 RADIO_PROGRAMS_REPOSITORY_UPDATE_ITEM_MOCK_PATCH = (
     f"{RADIO_PROGRAMS_REPOSITORY_PATH}.update_item"
+)
+RADIO_PROGRAM_FILES_REPOSITORY_PATH = (
+    f"{RADIO_PROGRAMS_PATH}.radio_program_files_repository"
+)
+RADIO_PROGRAM_FILES_REPOSITORY_DELETE_S3_OBJECT_MOCK_PATCH = (
+    f"{RADIO_PROGRAM_FILES_REPOSITORY_PATH}.delete_object"
 )
 
 
@@ -250,3 +259,55 @@ class TestRadioProgramsDomain(unittest.TestCase):
             self.radio_program_files_repository.get_object(
                 object_key=db_radio_program.radio_program.file_name
             )
+
+    @mock.patch(RADIO_PROGRAM_FILES_REPOSITORY_DELETE_S3_OBJECT_MOCK_PATCH)
+    def test_delete_radio_program_with_s3_client_error_removes_from_dynamo(
+        self, delete_s3_object_mock: mock.patch
+    ):
+        """Should delete an existing radio program even if fails to delete from S3."""
+        # Given
+        radio_program_in = RadioProgramCreateInSchema(
+            **self.create_program_model.dict()
+        )
+        radio_program_file = self.upload_file
+        db_radio_program = self.radio_programs.create(
+            radio_program=radio_program_in, program_file=radio_program_file.file
+        )
+
+        # When
+        delete_s3_object_mock.side_effect = S3ClientError("Test error")
+        self.radio_programs.delete(program_id=db_radio_program.id)
+
+        # Then
+        with pytest.raises(DynamoDbItemNotFoundError):
+            self.radio_programs.get(program_id=db_radio_program.id)
+        uploaded_object = self.radio_program_files_repository.get_object(
+            object_key=db_radio_program.radio_program.file_name
+        )
+        assert uploaded_object.read() == radio_program_file.file_content
+
+    @mock.patch(RADIO_PROGRAM_FILES_REPOSITORY_DELETE_S3_OBJECT_MOCK_PATCH)
+    def test_delete_radio_program_with_s3_persistence_error_removes_from_dynamo(
+        self, delete_s3_object_mock: mock.patch
+    ):
+        """Should delete an existing radio program even if fails to delete from S3."""
+        # Given
+        radio_program_in = RadioProgramCreateInSchema(
+            **self.create_program_model.dict()
+        )
+        radio_program_file = self.upload_file
+        db_radio_program = self.radio_programs.create(
+            radio_program=radio_program_in, program_file=radio_program_file.file
+        )
+
+        # When
+        delete_s3_object_mock.side_effect = S3PersistenceError("Test error")
+        self.radio_programs.delete(program_id=db_radio_program.id)
+
+        # Then
+        with pytest.raises(DynamoDbItemNotFoundError):
+            self.radio_programs.get(program_id=db_radio_program.id)
+        uploaded_object = self.radio_program_files_repository.get_object(
+            object_key=db_radio_program.radio_program.file_name
+        )
+        assert uploaded_object.read() == radio_program_file.file_content
