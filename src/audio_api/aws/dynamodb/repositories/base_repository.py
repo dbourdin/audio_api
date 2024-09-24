@@ -102,7 +102,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                     return {k: _parse_value(v) for k, v in val.items() if v}
                 return val
 
-            return _parse_value(item.dict(exclude_none=True))
+            return _parse_value(serialize(item.dict(exclude_none=True)))
 
         update_item_dict = _build_update_item_dict(update_item)
         attributes = {
@@ -205,7 +205,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         item_dict["id"] = item_id
 
         try:
-            response = self.table.put_item(Item=item_dict)
+            response = self.table.put_item(Item=serialize(item_dict))
         except ClientError as e:
             logger.error(f"Failed to put_item {item_id} on {self.table_name} table.")
             raise DynamoDbClientError(f"Failed to store new item in DynamoDB: {e}")
