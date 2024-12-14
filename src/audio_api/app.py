@@ -27,7 +27,7 @@ def get_api_version():
     )
 
 
-if settings.ENVIRONMENT == EnvironmentEnum.development:
+if settings.ENVIRONMENT != EnvironmentEnum.production:
 
     @app.get("/settings", tags=["settings"], response_model=ApiSettings)
     def get_api_settings():
