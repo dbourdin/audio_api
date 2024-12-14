@@ -1,22 +1,29 @@
 """Sanity check tests."""
+import unittest
 
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from audio_api import version
 
 
-def test_version(client: TestClient):
-    """Basic FastAPI version test."""
-    response = client.get("/version")
+@pytest.mark.usefixtures("test_client")
+class TestApi(unittest.TestCase):
+    """TestApi class."""
 
-    assert response.status_code == status.HTTP_200_OK
-    assert "Audio API" in response.json()["title"]
-    assert version.__version__ in response.json()["version"]
+    client: TestClient
 
+    def test_version(self):
+        """Basic FastAPI version test."""
+        response = self.client.get("/version")
 
-def test_settings(client: TestClient):
-    """Basic FastAPI settings test."""
-    response = client.get("/settings")
+        assert response.status_code == status.HTTP_200_OK
+        assert "Audio API" in response.json()["title"]
+        assert version.__version__ in response.json()["version"]
 
-    assert response.status_code == status.HTTP_200_OK
+    def test_settings(self):
+        """Basic FastAPI settings test."""
+        response = self.client.get("/settings")
+
+        assert response.status_code == status.HTTP_200_OK

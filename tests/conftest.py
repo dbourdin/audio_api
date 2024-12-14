@@ -24,10 +24,12 @@ TEST_AUDIO_FILE = (
 )
 
 
-@pytest.fixture
-def client() -> TestClient:
+@pytest.fixture(scope="class")
+def test_client(request) -> TestClient:
     """Return a FastAPI test client."""
-    return TestClient(app)
+    client = TestClient(app)
+    request.cls.client = client
+    return client
 
 
 @pytest.fixture(scope="session")
