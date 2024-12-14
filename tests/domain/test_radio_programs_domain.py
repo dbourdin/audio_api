@@ -1,4 +1,4 @@
-"""Test TestRadioProgramsDomain."""
+"""Test RadioPrograms domain."""
 
 import unittest
 from unittest import mock
