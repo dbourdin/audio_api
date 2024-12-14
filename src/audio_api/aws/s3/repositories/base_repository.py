@@ -2,11 +2,10 @@
 from datetime import datetime
 from typing import Generic, TypeVar
 
-import boto3
-from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from botocore.response import StreamingBody
 
+from audio_api.aws.aws_service import AwsService, AwsServices
 from audio_api.aws.s3.buckets import S3_BUCKETS
 from audio_api.aws.s3.exceptions import (
     S3BucketNotImplementedError,
@@ -15,7 +14,7 @@ from audio_api.aws.s3.exceptions import (
     S3PersistenceError,
 )
 from audio_api.aws.s3.models import S3CreateModel, S3FileModel
-from audio_api.aws.settings import AwsResources, S3Buckets, get_settings
+from audio_api.aws.settings import S3Buckets, get_settings
 from audio_api.logger.logger import get_logger
 from audio_api.settings import EnvironmentEnum
 
@@ -30,6 +29,8 @@ CreateModelType = TypeVar("CreateModelType", bound=S3CreateModel)
 class BaseS3Repository(Generic[ModelType, CreateModelType]):
     """BaseS3Repository class."""
 
+    service: AwsService = AwsService(AwsServices.s3)
+
     def __init__(self, model: type[ModelType]):
         """Repository with default methods to Store, Read, and Delete files from S3.
 
@@ -38,8 +39,8 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         """
         self.model = model
         self.bucket_name = self._get_s3_bucket_name()
-        self.s3_client = self.get_s3_client()
-        self.s3_bucket = self.get_s3_bucket_resource()
+        self.s3_client = self.service.get_client()
+        self.s3_bucket = self.service.get_resource().Bucket(self.bucket_name)
 
     def _get_s3_bucket_name(self) -> S3Buckets:
         """Get S3 bucket from S3_BUCKETS."""
@@ -47,34 +48,6 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         if not bucket:
             raise S3BucketNotImplementedError
         return bucket
-
-    def get_s3_bucket_resource(self):
-        """Return an S3 bucket Resource configured with boto3."""
-        s3 = boto3.resource(
-            AwsResources.s3,
-            endpoint_url=settings.AWS_ENDPOINT_URL,
-            region_name=settings.AWS_DEFAULT_REGION,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        )
-        bucket = s3.Bucket(self.bucket_name)
-        bucket.delete_all = self._delete_all
-        return bucket
-
-    @classmethod
-    def get_s3_client(cls) -> BaseClient:
-        """Return an S3 client for the current AWS S3 configuration.
-
-        Returns:
-            BaseClient: Boto3 client set up for S3.
-        """
-        return boto3.client(
-            AwsResources.s3,
-            endpoint_url=settings.AWS_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_DEFAULT_REGION,
-        )
 
     def _build_object_url(self, object_key: str) -> str:
         """Return the uploaded file URL.
@@ -246,7 +219,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             list: List containing delete response data.
         """
         try:
-            return self.s3_bucket.delete_all()
+            return self._delete_all()
         except Exception:
             logger.error(
                 f"Failed to delete all objects from {self.bucket_name} bucket."
