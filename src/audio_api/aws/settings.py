@@ -7,20 +7,13 @@ from pydantic import BaseSettings
 from audio_api.settings import EnvironmentSettings
 
 
-class AwsService(str, Enum):
-    """AwsService Enum."""
-
-    dynamodb = "dynamodb"
-    s3 = "s3"
-
-
 class DynamoDbTables(str, Enum):
     """DynamoDbTable Enum."""
 
     radio_programs = "radio_programs"
 
 
-class S3Bucket(str, Enum):
+class S3Buckets(str, Enum):
     """S3Buckets Enum."""
 
     radio_programs = "radio-programs"

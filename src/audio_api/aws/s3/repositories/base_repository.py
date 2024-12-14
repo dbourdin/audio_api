@@ -14,7 +14,7 @@ from audio_api.aws.s3.exceptions import (
     S3PersistenceError,
 )
 from audio_api.aws.s3.models import S3CreateModel, S3FileModel
-from audio_api.aws.settings import S3Bucket, get_settings
+from audio_api.aws.settings import S3Buckets, get_settings
 from audio_api.logger.logger import get_logger
 from audio_api.settings import EnvironmentEnum
 
@@ -42,7 +42,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         self.s3_client = self.service.get_client()
         self.s3_bucket = self.service.get_resource().Bucket(self.bucket_name)
 
-    def _get_s3_bucket_name(self) -> S3Bucket:
+    def _get_s3_bucket_name(self) -> S3Buckets:
         """Get S3 bucket from S3_BUCKETS."""
         bucket = S3_BUCKETS.get(self.model)
         if not bucket:
