@@ -3,12 +3,11 @@ from datetime import date, datetime
 from typing import Any, Generic, TypeVar
 from uuid import UUID, uuid4
 
-import boto3
 from boto3.dynamodb.conditions import Key
-from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
+from audio_api.aws.base import get_aws_client, get_aws_resource
 from audio_api.aws.dynamodb.exceptions import (
     DynamoDbClientError,
     DynamoDbItemNotFoundError,
@@ -58,32 +57,10 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             model: A DynamoDbItemModel class.
         """
         self.model = model
-        self.dynamodb_client = self.get_dynamodb_client()
-        self.dynamodb_resource = self.get_dynamodb_resource()
+        self.dynamodb_client = get_aws_client(AwsResources.dynamodb)
+        self.dynamodb_resource = get_aws_resource(AwsResources.dynamodb)
         self.table_name = dynamodb_tables[self.model].table_name
         self.table = self.dynamodb_resource.Table(self.table_name)
-
-    @classmethod
-    def get_dynamodb_client(cls) -> BaseClient:
-        """Return a DynamoDB Client configured with boto3."""
-        return boto3.client(
-            AwsResources.dynamodb,
-            endpoint_url=settings.AWS_ENDPOINT_URL,
-            region_name=settings.AWS_DEFAULT_REGION,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        )
-
-    @classmethod
-    def get_dynamodb_resource(cls):
-        """Return a DynamoDB Resource configured with boto3."""
-        return boto3.resource(
-            AwsResources.dynamodb,
-            endpoint_url=settings.AWS_ENDPOINT_URL,
-            region_name=settings.AWS_DEFAULT_REGION,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        )
 
     @classmethod
     def _build_update_query_expression(cls, update_item: ModelType) -> dict:
