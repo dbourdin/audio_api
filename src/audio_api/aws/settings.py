@@ -20,7 +20,7 @@ class DynamoDbTables(str, Enum):
     radio_programs = "radio_programs"
 
 
-class S3Buckets(str, Enum):
+class S3Bucket(str, Enum):
     """S3Buckets Enum."""
 
     radio_programs = "radio-programs"

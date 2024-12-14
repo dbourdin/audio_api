@@ -5,7 +5,7 @@ from typing import Generic, TypeVar
 from botocore.exceptions import ClientError
 from botocore.response import StreamingBody
 
-from audio_api.aws.base import get_aws_client, get_aws_resource
+from audio_api.aws.aws_service import AwsService, AwsServices
 from audio_api.aws.s3.buckets import S3_BUCKETS
 from audio_api.aws.s3.exceptions import (
     S3BucketNotImplementedError,
@@ -14,7 +14,7 @@ from audio_api.aws.s3.exceptions import (
     S3PersistenceError,
 )
 from audio_api.aws.s3.models import S3CreateModel, S3FileModel
-from audio_api.aws.settings import AwsService, S3Buckets, get_settings
+from audio_api.aws.settings import S3Bucket, get_settings
 from audio_api.logger.logger import get_logger
 from audio_api.settings import EnvironmentEnum
 
@@ -29,6 +29,8 @@ CreateModelType = TypeVar("CreateModelType", bound=S3CreateModel)
 class BaseS3Repository(Generic[ModelType, CreateModelType]):
     """BaseS3Repository class."""
 
+    service: AwsService = AwsService(AwsServices.s3)
+
     def __init__(self, model: type[ModelType]):
         """Repository with default methods to Store, Read, and Delete files from S3.
 
@@ -37,10 +39,10 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         """
         self.model = model
         self.bucket_name = self._get_s3_bucket_name()
-        self.s3_client = get_aws_client(AwsService.s3)
-        self.s3_bucket = get_aws_resource(AwsService.s3).Bucket(self.bucket_name)
+        self.s3_client = self.service.get_client()
+        self.s3_bucket = self.service.get_resource().Bucket(self.bucket_name)
 
-    def _get_s3_bucket_name(self) -> S3Buckets:
+    def _get_s3_bucket_name(self) -> S3Bucket:
         """Get S3 bucket from S3_BUCKETS."""
         bucket = S3_BUCKETS.get(self.model)
         if not bucket:

@@ -7,7 +7,7 @@ from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
-from audio_api.aws.base import get_aws_client, get_aws_resource
+from audio_api.aws.aws_service import AwsService, AwsServices
 from audio_api.aws.dynamodb.exceptions import (
     DynamoDbClientError,
     DynamoDbItemNotFoundError,
@@ -19,7 +19,7 @@ from audio_api.aws.dynamodb.models import (
     DynamoDbUpdateItemModel,
 )
 from audio_api.aws.dynamodb.tables import dynamodb_tables
-from audio_api.aws.settings import AwsService, get_settings
+from audio_api.aws.settings import get_settings
 from audio_api.logger.logger import get_logger
 
 logger = get_logger("dynamodb_repository")
@@ -47,6 +47,8 @@ def serialize(obj_in: dict) -> dict:
 class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemModelType]):
     """BaseBaseDynamoDbRepository class."""
 
+    service: AwsService = AwsService(AwsServices.dynamodb)
+
     def __init__(
         self,
         model: type[ModelType],
@@ -57,8 +59,8 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             model: A DynamoDbItemModel class.
         """
         self.model = model
-        self.dynamodb_client = get_aws_client(AwsService.dynamodb)
-        self.dynamodb_resource = get_aws_resource(AwsService.dynamodb)
+        self.dynamodb_client = self.service.get_client()
+        self.dynamodb_resource = self.service.get_resource()
         self.table_name = dynamodb_tables[self.model].table_name
         self.table = self.dynamodb_resource.Table(self.table_name)
 
