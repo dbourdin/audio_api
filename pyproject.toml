@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "audio-api"
-version = "0.2.1"
+version = "0.2.2"
 description = "Audio API built with FastAPI, DynamoDB and S3 integration"
 authors = ["Damian Bourdin <damian.bourdin@gmail.com>"]
 
