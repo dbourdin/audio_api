@@ -15,9 +15,12 @@ from audio_api.api.schemas import (
     RadioProgramUpdateOutSchema,
 )
 from audio_api.api.schemas.utils import as_form
-from audio_api.aws.dynamodb.exceptions import DynamoDbClientError
+from audio_api.aws.dynamodb.exceptions import (
+    DynamoDbClientError,
+    DynamoDbItemNotFoundError,
+    DynamoDbStatusError,
+)
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
-from audio_api.domain.exceptions import RadioProgramNotFoundError
 from audio_api.domain.radio_programs import RadioPrograms
 
 router = APIRouter()
@@ -51,12 +54,12 @@ async def get(
     """
     try:
         return RadioPrograms.get(program_id=program_id)
-    except RadioProgramNotFoundError:
+    except DynamoDbItemNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="RadioProgram not found.",
         )
-    except DynamoDbClientError:
+    except (DynamoDbClientError, DynamoDbStatusError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve RadioProgram from the DB.",
@@ -82,7 +85,7 @@ def get_all() -> Any:
     """
     try:
         return RadioPrograms.get_all()
-    except DynamoDbClientError:
+    except (DynamoDbClientError, DynamoDbStatusError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve RadioPrograms from the DB.",
@@ -96,7 +99,7 @@ def get_all() -> Any:
     description="Create a RadioProgram",
     status_code=status.HTTP_201_CREATED,
     responses={
-        status.HTTP_400_BAD_REQUEST: {"model": APIMessage},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": APIMessage},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": APIMessage},
     },
 )
@@ -118,14 +121,14 @@ async def create(
             If failed to store RadioProgram on DB.
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to connect to S3.
-        HTTPException: HTTP_400_BAD_REQUEST
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to upload RadioProgram file to S3.
     """
     try:
         return RadioPrograms.create(
             radio_program=program_in, program_file=program_file.file
         )
-    except DynamoDbClientError:
+    except (DynamoDbClientError, DynamoDbStatusError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to store RadioProgram in the DB.",
@@ -137,7 +140,7 @@ async def create(
         )
     except S3PersistenceError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to upload RadioProgram file to S3.",
         )
 
@@ -150,8 +153,8 @@ async def create(
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_404_NOT_FOUND: {"model": APIMessage},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": APIMessage},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": APIMessage},
-        status.HTTP_400_BAD_REQUEST: {"model": APIMessage},
     },
 )
 async def update(
@@ -176,7 +179,7 @@ async def update(
             If failed to store RadioProgram on DB.
         HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to connect to S3.
-        HTTPException: HTTP_400_BAD_REQUEST
+        HTTPException: HTTP_500_INTERNAL_SERVER_ERROR
             If failed to upload RadioProgram file to S3.
     """
     program_file = program_file.file if program_file else None
@@ -185,12 +188,12 @@ async def update(
         return RadioPrograms.update(
             program_id=program_id, new_program=program_in, program_file=program_file
         )
-    except RadioProgramNotFoundError:
+    except DynamoDbItemNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="RadioProgram not found.",
         )
-    except DynamoDbClientError:
+    except (DynamoDbClientError, DynamoDbStatusError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to store RadioProgram in the DB.",
@@ -202,7 +205,7 @@ async def update(
         )
     except S3PersistenceError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to upload RadioProgram file to S3.",
         )
 
@@ -233,13 +236,13 @@ async def delete(
             If failed to delete RadioProgram from DB.
     """
     try:
-        RadioPrograms.remove(program_id=program_id)
-    except RadioProgramNotFoundError:
+        RadioPrograms.delete(program_id=program_id)
+    except DynamoDbItemNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="RadioProgram not found.",
         )
-    except DynamoDbClientError:
+    except (DynamoDbClientError, DynamoDbStatusError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete RadioProgram from the DB.",

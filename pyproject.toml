@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "audio-api"
-version = "0.2.1"
+version = "0.2.2"
 description = "Audio API built with FastAPI, DynamoDB and S3 integration"
 authors = ["Damian Bourdin <damian.bourdin@gmail.com>"]
 
@@ -11,15 +11,20 @@ botocore = "^1.31.63"
 click = "^8.1.7"
 fastapi = "^0.104.0"
 fastapi-utils = "^0.2.1"
-python-multipart = "^0.0.6"
+python-multipart = "^0.0.19"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.2"
-pytest-cov = "^4.1.0"
-testcontainers = "^3.7.1"
-testcontainers-localstack = "^0.0.1rc1"
 typer = "^0.9.0"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
+requests = "^2.31.0"
+testcontainers = "^3.7.1"
+testcontainers-localstack = "^0.0.1rc1"
+httpx = "^0.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -33,3 +38,6 @@ profile = "black"
 multi_line_output = 3
 known_first_party = ["audio_api"]
 default_section="THIRDPARTY"
+
+[tool.pytest.ini_options]
+addopts = "--cov audio_api --cov-report term-missing"

@@ -9,5 +9,9 @@ class S3ClientError(Exception):
     """S3ClientError class."""
 
 
+class S3FileNotFoundError(Exception):
+    """S3FileNotFoundError class."""
+
+
 class S3BucketNotImplementedError(Exception):
     """S3BucketNotImplementedError class."""

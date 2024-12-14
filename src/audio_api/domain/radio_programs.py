@@ -9,18 +9,23 @@ from audio_api.aws.dynamodb.models import (
     RadioProgramUpdateItemModel,
 )
 from audio_api.aws.dynamodb.repositories import radio_programs_repository
+from audio_api.aws.dynamodb.repositories.radio_programs import RadioProgramsRepository
 from audio_api.aws.s3.exceptions import S3ClientError, S3PersistenceError
 from audio_api.aws.s3.models import RadioProgramFileCreate
 from audio_api.aws.s3.repositories import radio_program_files_repository
-from audio_api.domain.exceptions import RadioProgramNotFoundError
+from audio_api.aws.s3.repositories.radio_program_files import (
+    RadioProgramFilesRepository,
+)
 from audio_api.domain.models import RadioProgramModel
 
 
 class RadioPrograms:
     """RadioPrograms class used to create, read, update and delete radio programs."""
 
-    radio_programs_repository = radio_programs_repository
-    radio_program_files_repository = radio_program_files_repository
+    radio_programs_repository: RadioProgramsRepository = radio_programs_repository
+    radio_program_files_repository: RadioProgramFilesRepository = (
+        radio_program_files_repository
+    )
 
     @classmethod
     def _delete_file_from_s3(cls, file_name: str):
@@ -45,19 +50,10 @@ class RadioPrograms:
         Args:
             program_id: program_id of the RadioProgram to retrieve.
 
-        Raises:
-            RadioProgramNotFoundError: If the RadioProgram is not found.
-
         Returns:
             RadioProgramModel: Model containing stored data.
         """
-        radio_program = cls.radio_programs_repository.get_item(item_id=program_id)
-        if not radio_program:
-            raise RadioProgramNotFoundError(
-                f"RadioProgram with id {program_id} does not exist."
-            )
-
-        return radio_program
+        return cls.radio_programs_repository.get_item(item_id=program_id)
 
     @classmethod
     def get_all(cls) -> list[RadioProgramModel]:
@@ -158,22 +154,17 @@ class RadioPrograms:
         return updated_program
 
     @classmethod
-    def remove(
+    def delete(
         cls,
         *,
         program_id: uuid.UUID,
-    ) -> RadioProgramModel:
+    ) -> None:
         """Remove an existing RadioProgram and S3 file if exists.
 
         Args:
             program_id: of the RadioProgram to be removed.
-
-        Returns:
-            RadioProgramModel: The removed RadioProgram.
         """
         existing_program = cls.get(program_id=program_id)
-        deleted_program = cls.radio_programs_repository.delete_item(item_id=program_id)
+        cls.radio_programs_repository.delete_item(item_id=program_id)
         if existing_program.radio_program:
             cls._delete_file_from_s3(file_name=existing_program.radio_program.file_name)
-
-        return deleted_program

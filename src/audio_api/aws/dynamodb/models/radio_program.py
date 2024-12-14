@@ -5,7 +5,11 @@ from audio_api.aws.dynamodb.models import (
     DynamoDbPutItemModel,
     DynamoDbUpdateItemModel,
 )
-from audio_api.domain.models import BaseRadioProgramModel, RadioProgramModel
+from audio_api.domain.models import (
+    BaseRadioProgramModel,
+    RadioProgramFileModel,
+    RadioProgramModel,
+)
 
 
 class RadioProgramItemModel(DynamoDbItemModel, RadioProgramModel):
@@ -18,3 +22,5 @@ class RadioProgramPutItemModel(DynamoDbPutItemModel, BaseRadioProgramModel):
 
 class RadioProgramUpdateItemModel(DynamoDbUpdateItemModel, BaseRadioProgramModel):
     """RadioProgramUpdateItemModel class."""
+
+    radio_program: RadioProgramFileModel | None
