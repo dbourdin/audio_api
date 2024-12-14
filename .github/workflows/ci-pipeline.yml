@@ -4,6 +4,13 @@ on: [push]
 
 permissions:
   contents: read
+env:
+  ENVIRONMENT: test
+  AWS_ENDPOINT_URL: http://localhost:4566
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  RADIO_PROGRAMS_BUCKET: radio-programs
 
 jobs:
   build:
