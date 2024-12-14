@@ -38,3 +38,6 @@ profile = "black"
 multi_line_output = 3
 known_first_party = ["audio_api"]
 default_section="THIRDPARTY"
+
+[tool.pytest.ini_options]
+addopts = "--cov audio_api --cov-report term-missing"
