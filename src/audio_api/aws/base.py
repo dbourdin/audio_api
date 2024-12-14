@@ -3,12 +3,12 @@ import boto3
 from boto3.resources.base import ServiceResource
 from botocore.client import BaseClient
 
-from audio_api.aws.settings import AwsResources, get_settings
+from audio_api.aws.settings import AwsService, get_settings
 
 settings = get_settings()
 
 
-def get_aws_client(service_name: AwsResources) -> BaseClient:
+def get_aws_client(service_name: AwsService) -> BaseClient:
     """Return a boto3 Client for a specified service_name."""
     return boto3.client(
         service_name=service_name,

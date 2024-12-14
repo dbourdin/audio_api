@@ -19,7 +19,7 @@ from audio_api.aws.dynamodb.models import (
     DynamoDbUpdateItemModel,
 )
 from audio_api.aws.dynamodb.tables import dynamodb_tables
-from audio_api.aws.settings import AwsResources, get_settings
+from audio_api.aws.settings import AwsService, get_settings
 from audio_api.logger.logger import get_logger
 
 logger = get_logger("dynamodb_repository")
@@ -57,8 +57,8 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             model: A DynamoDbItemModel class.
         """
         self.model = model
-        self.dynamodb_client = get_aws_client(AwsResources.dynamodb)
-        self.dynamodb_resource = get_aws_resource(AwsResources.dynamodb)
+        self.dynamodb_client = get_aws_client(AwsService.dynamodb)
+        self.dynamodb_resource = get_aws_resource(AwsService.dynamodb)
         self.table_name = dynamodb_tables[self.model].table_name
         self.table = self.dynamodb_resource.Table(self.table_name)
 

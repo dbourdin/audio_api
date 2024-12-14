@@ -7,8 +7,8 @@ from pydantic import BaseSettings
 from audio_api.settings import EnvironmentSettings
 
 
-class AwsResources(str, Enum):
-    """AwsResource Enum."""
+class AwsService(str, Enum):
+    """AwsService Enum."""
 
     dynamodb = "dynamodb"
     s3 = "s3"
