@@ -16,6 +16,7 @@ from audio_api.aws.s3.repositories import (
 from audio_api.aws.s3.repositories.radio_program_files import (
     RadioProgramFilesRepository,
 )
+from audio_api.domain.radio_programs import RadioPrograms
 from tests.api.test_utils import create_upload_file, radio_program
 from tests.aws.testcontainers.localstack import localstack_container
 
@@ -37,6 +38,13 @@ def localstack(request):
     """Run LocalStack Container in a test session."""
     with localstack_container:
         yield localstack_container
+
+
+@pytest.fixture(scope="class")
+def radio_programs(request) -> type[RadioPrograms]:
+    """Return RadioPrograms domain."""
+    request.cls.radio_programs = RadioPrograms
+    return RadioPrograms
 
 
 @pytest.fixture(scope="class")

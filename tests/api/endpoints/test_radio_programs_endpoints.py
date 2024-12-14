@@ -39,7 +39,7 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
 
         # When
         response = self.client.get(f"/programs/{get_program.id}")
-        received = RadioProgramListSchema.parse_obj(response.json())
+        received = RadioProgramGetSchema.parse_obj(response.json())
 
         # Then
         assert response.status_code == status.HTTP_200_OK, response.text
