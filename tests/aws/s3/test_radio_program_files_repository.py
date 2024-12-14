@@ -2,6 +2,7 @@
 import time
 import unittest
 from unittest import mock
+from unittest.mock import patch
 
 import pytest
 import requests
@@ -34,9 +35,6 @@ S3_PUT_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.put_object"
 S3_LIST_OBJECTS_MOCK_PATCH = f"{S3_CLIENT_PATH}.list_objects_v2"
 S3_DELETE_OBJECT_MOCK_PATCH = f"{S3_CLIENT_PATH}.delete_object"
 S3_DELETE_ALL_MOCK_PATCH = f"{RADIO_PROGRAM_FILES_REPOSITORY_PATH}._delete_all"
-ENVIRONMENT_SETTINGS_PATH = (
-    f"{S3_REPOSITORIES_PATH}.base_repository.settings.ENVIRONMENT"
-)
 
 
 @pytest.mark.usefixtures("localstack")
@@ -332,10 +330,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
         with pytest.raises(S3BucketNotImplementedError):
             self.radio_program_files_repository._get_s3_bucket_name()
 
-    @mock.patch(ENVIRONMENT_SETTINGS_PATH)
-    def test_build_object_url_returns_correct_production_url(
-        self, environment_settings_mock: mock.patch
-    ):
+    def test_build_object_url_returns_correct_production_url(self):
         """Test _build_object_url returns correct url if environment is production."""
         # Given
         object_key = "test_key"
@@ -345,10 +340,12 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
         )
 
         # When
-        environment_settings_mock.return_value = EnvironmentEnum.production
-        url = self.radio_program_files_repository._build_object_url(
-            object_key=object_key
-        )
+        from audio_api.aws.s3.repositories.base_repository import settings
+
+        with patch.object(settings, "ENVIRONMENT", EnvironmentEnum.production):
+            url = self.radio_program_files_repository._build_object_url(
+                object_key=object_key
+            )
 
         # Then
         assert url == expected_url
