@@ -2,7 +2,7 @@
 from tempfile import SpooledTemporaryFile
 from typing import Any
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 
 class S3BaseModel(BaseModel):
@@ -22,7 +22,7 @@ class S3CreateModel(S3BaseModel):
 
     file: Any
 
-    @validator("file")
+    @field_validator("file")
     def validate_file(cls, value):
         """Validate that file is the required type."""
         if not isinstance(value, SpooledTemporaryFile):
