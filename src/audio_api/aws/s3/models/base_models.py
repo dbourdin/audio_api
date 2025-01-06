@@ -1,5 +1,4 @@
 """S3BaseModel Models."""
-import os.path
 from tempfile import SpooledTemporaryFile
 from typing import Any
 
@@ -12,12 +11,6 @@ class S3BaseModel(BaseModel):
 
     file_name: str
 
-    @field_validator("file_name", mode="before")
-    def slugify_file_name(cls, value):
-        """Slugify file_name to be URL friendly."""
-        name, ext = os.path.splitext(value)
-        return f"{slugify(name)}{ext}"
-
 
 class S3FileModel(S3BaseModel):
     """S3FileModel class."""
@@ -29,6 +22,11 @@ class S3CreateModel(S3BaseModel):
     """S3CreateModel class."""
 
     file: Any
+
+    @field_validator("file_name", mode="before")
+    def slugify_file_name(cls, value):
+        """Slugify file_name to be URL friendly."""
+        return slugify(value)
 
     @field_validator("file")
     def validate_file(cls, value):
