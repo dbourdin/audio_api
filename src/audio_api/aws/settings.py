@@ -2,7 +2,7 @@
 from enum import Enum
 from functools import lru_cache
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 from audio_api.settings import EnvironmentSettings
 
