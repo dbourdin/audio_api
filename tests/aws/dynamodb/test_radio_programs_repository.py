@@ -153,13 +153,13 @@ class TestRadioProgramsRepository(unittest.TestCase):
         created_program = self.radio_programs_repository.put_item(
             item=self.create_program_model
         )
-        created_program_dict = created_program.dict()
+        created_program_dict = created_program.model_dump()
 
         # Then
         assert created_program.id is not None
         assert all(
             key in created_program_dict and created_program_dict[key] == value
-            for key, value in self.create_program_model.dict().items()
+            for key, value in self.create_program_model.model_dump().items()
         )
 
     @mock.patch(DYNAMODB_TABLE_MOCK_PATH)
@@ -193,8 +193,8 @@ class TestRadioProgramsRepository(unittest.TestCase):
         created_program = self.radio_programs_repository.put_item(
             item=self.create_program_model
         )
-        expected_program = created_program.copy(
-            update=self.update_program_model.dict(exclude_none=True)
+        expected_program = created_program.model_copy(
+            update=self.update_program_model.model_dump(exclude_none=True)
         )
 
         # When

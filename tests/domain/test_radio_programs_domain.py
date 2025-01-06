@@ -68,7 +68,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
         """Should create a new RadioProgram."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
 
@@ -94,7 +94,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
         """Should raise DynamoDbClientError if fails to store object in DynamoDB."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
 
@@ -123,8 +123,8 @@ class TestRadioProgramsDomain(unittest.TestCase):
     def test_get_all_radio_programs(self):
         """Should retrieve all existing RadioPrograms."""
         # Given
-        radio_program_1 = self.create_program_model.copy()
-        radio_program_2 = self.create_program_model.copy()
+        radio_program_1 = self.create_program_model.model_copy()
+        radio_program_2 = self.create_program_model.model_copy()
         radio_program_2.title = "test program 2"
         radio_program_2.description = "test program 2"
         created_radio_program_1 = self.radio_programs_repository.put_item(
@@ -145,7 +145,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
         """Should update an existing RadioProgram."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         created_radio_program = self.radio_programs.create(
@@ -166,7 +166,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
         """Should update an existing RadioProgram with a new radio_program_file."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         new_radio_program_file = self.new_upload_file
@@ -242,7 +242,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
         """Should delete an existing radio program."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         db_radio_program = self.radio_programs.create(
@@ -267,7 +267,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
         """Should delete an existing radio program even if fails to delete from S3."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         db_radio_program = self.radio_programs.create(
@@ -293,7 +293,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
         """Should delete an existing radio program even if fails to delete from S3."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         db_radio_program = self.radio_programs.create(

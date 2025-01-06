@@ -65,7 +65,7 @@ def radio_program_files_repository(request) -> RadioProgramFilesRepository:
 def create_program_model(request) -> RadioProgramPutItemModel:
     """Return an RadioProgramPutItemModel instance."""
     put_item_model = RadioProgramPutItemModel(
-        **radio_program(title="test program").dict()
+        **radio_program(title="test program").model_dump()
     )
     request.cls.create_program_model = put_item_model
     return put_item_model

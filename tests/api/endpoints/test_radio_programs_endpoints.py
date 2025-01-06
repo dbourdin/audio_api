@@ -35,11 +35,11 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         # Given
         get_program = radio_program(title="Test program get")
         radio_programs_mock.get.return_value = get_program
-        expected = RadioProgramGetSchema.from_orm(get_program)
+        expected = RadioProgramGetSchema.model_validate(get_program.model_dump())
 
         # When
         response = self.client.get(f"/programs/{get_program.id}")
-        received = RadioProgramGetSchema.parse_obj(response.json())
+        received = RadioProgramGetSchema.model_validate(response.json())
 
         # Then
         assert response.status_code == status.HTTP_200_OK, response.text
@@ -108,13 +108,15 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         ]
         radio_programs_mock.get_all.return_value = radio_programs
         expected = [
-            RadioProgramListSchema.from_orm(program) for program in radio_programs
+            RadioProgramListSchema.model_validate(program.model_dump())
+            for program in radio_programs
         ]
 
         # When
         response = self.client.get("/programs")
         received = [
-            RadioProgramListSchema.parse_obj(program) for program in response.json()
+            RadioProgramListSchema.model_validate(program)
+            for program in response.json()
         ]
 
         # Then
@@ -179,15 +181,19 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create a RadioProgram via POST."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
+        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
         radio_programs_mock.create.return_value = created_program
-        expected = RadioProgramCreateOutSchema.parse_obj(created_program.dict())
+        expected = RadioProgramCreateOutSchema.model_validate(
+            created_program.model_dump()
+        )
 
         # When
         response = self.client.post(
-            "/programs", data=radio_program_in.dict(), files=create_temp_file()
+            "/programs",
+            data=radio_program_in.model_dump(exclude_none=True),
+            files=create_temp_file(),
         )
-        received = RadioProgramCreateOutSchema.parse_raw(response.text)
+        received = RadioProgramCreateOutSchema.model_validate(response.json())
 
         # Then
         assert response.status_code == status.HTTP_201_CREATED, response.text
@@ -201,10 +207,10 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create a RadioProgram via POST."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
+        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
 
         # When
-        response = self.client.post("/programs", data=radio_program_in.dict())
+        response = self.client.post("/programs", data=radio_program_in.model_dump())
 
         # Then
         assert (
@@ -233,14 +239,16 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create RadioProgram should raise 500 if S3ClientError."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
+        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
         radio_programs_mock.create.side_effect = S3ClientError(
             "Failed to get response from S3: test error"
         )
 
         # When
         response = self.client.post(
-            "/programs", data=radio_program_in.dict(), files=create_temp_file()
+            "/programs",
+            data=radio_program_in.model_dump(exclude_none=True),
+            files=create_temp_file(),
         )
 
         # Then
@@ -258,14 +266,16 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create RadioProgram should raise 500 if S3PersistenceError."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
+        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
         radio_programs_mock.create.side_effect = S3PersistenceError(
             "Unsuccessful S3 put_object response. Status: test error"
         )
 
         # When
         response = self.client.post(
-            "/programs", data=radio_program_in.dict(), files=create_temp_file()
+            "/programs",
+            data=radio_program_in.model_dump(exclude_none=True),
+            files=create_temp_file(),
         )
 
         # Then
@@ -283,14 +293,16 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create RadioProgram should raise 500 if DynamoDbClientError."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
+        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
         radio_programs_mock.create.side_effect = DynamoDbClientError(
             "Failed to store new item in DynamoDB: test error"
         )
 
         # When
         response = self.client.post(
-            "/programs", data=radio_program_in.dict(), files=create_temp_file()
+            "/programs",
+            data=radio_program_in.model_dump(exclude_none=True),
+            files=create_temp_file(),
         )
 
         # Then
@@ -308,14 +320,16 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create RadioProgram should raise 500 if DynamoDbStatusError."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.dict())
+        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
         radio_programs_mock.create.side_effect = DynamoDbStatusError(
             "Failed to store new item in DynamoDB: test error"
         )
 
         # When
         response = self.client.post(
-            "/programs", data=radio_program_in.dict(), files=create_temp_file()
+            "/programs",
+            data=radio_program_in.model_dump(exclude_none=True),
+            files=create_temp_file(),
         )
 
         # Then
@@ -332,16 +346,18 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         # Given
         updated_program = radio_program(title="test_program_update")
         radio_programs_mock.update.return_value = updated_program
-        data_to_send = RadioProgramUpdateInSchema(**updated_program.dict())
-        expected = RadioProgramUpdateOutSchema.parse_obj(updated_program.dict())
+        data_to_send = RadioProgramUpdateInSchema(**updated_program.model_dump())
+        expected = RadioProgramUpdateOutSchema.model_validate(
+            updated_program.model_dump()
+        )
 
         # When
         response = self.client.put(
             f"/programs/{updated_program.id}",
-            data=data_to_send.dict(),
+            data=data_to_send.model_dump(exclude_none=True),
             files=create_temp_file(),
         )
-        received = RadioProgramUpdateOutSchema.parse_raw(response.text)
+        received = RadioProgramUpdateOutSchema.model_validate(response.json())
 
         # Then
         assert response.status_code == status.HTTP_200_OK, response.text
@@ -358,14 +374,17 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         # Given
         updated_program = radio_program(title="test_program_update")
         radio_programs_mock.update.return_value = updated_program
-        data_to_send = RadioProgramUpdateInSchema(**updated_program.dict())
-        expected = RadioProgramUpdateOutSchema.parse_obj(updated_program.dict())
+        data_to_send = RadioProgramUpdateInSchema(**updated_program.model_dump())
+        expected = RadioProgramUpdateOutSchema.model_validate(
+            updated_program.model_dump()
+        )
 
         # When
         response = self.client.put(
-            f"/programs/{updated_program.id}", data=data_to_send.dict()
+            f"/programs/{updated_program.id}",
+            data=data_to_send.model_dump(exclude_none=True),
         )
-        received = RadioProgramUpdateOutSchema.parse_raw(response.text)
+        received = RadioProgramUpdateOutSchema.model_validate(response.json())
 
         # Then
         assert response.status_code == status.HTTP_200_OK, response.text
@@ -382,13 +401,15 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         # Given
         updated_program = radio_program(title="test_program_update")
         radio_programs_mock.update.return_value = updated_program
-        expected = RadioProgramUpdateOutSchema.parse_obj(updated_program.dict())
+        expected = RadioProgramUpdateOutSchema.model_validate(
+            updated_program.model_dump()
+        )
 
         # When
         response = self.client.put(
             f"/programs/{updated_program.id}", files=create_temp_file()
         )
-        received = RadioProgramUpdateOutSchema.parse_raw(response.text)
+        received = RadioProgramUpdateOutSchema.model_validate(response.json())
 
         # Then
         assert response.status_code == status.HTTP_200_OK, response.text
@@ -404,13 +425,14 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram raises 404 if program is not found."""
         # Given
         updated_program = radio_program(title="test_program_update")
-        data_to_send = RadioProgramUpdateInSchema(**updated_program.dict())
+        data_to_send = RadioProgramUpdateInSchema(**updated_program.model_dump())
         radio_programs_mock.update.side_effect = DynamoDbItemNotFoundError(
             f"RadioProgram with id {updated_program.id} does not exist."
         )
 
         response = self.client.put(
-            f"/programs/{updated_program.id}", data=data_to_send.dict()
+            f"/programs/{updated_program.id}",
+            data=data_to_send.model_dump(exclude_none=True),
         )
 
         assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
@@ -425,7 +447,7 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram should raise 500 if S3ClientError."""
         # Given
         updated_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**updated_program.dict())
+        radio_program_in = RadioProgramUpdateInSchema(**updated_program.model_dump())
         radio_programs_mock.update.side_effect = S3ClientError(
             "Failed to get response from S3: test error"
         )
@@ -433,7 +455,7 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         # When
         response = self.client.put(
             f"/programs/{updated_program.id}",
-            data=radio_program_in.dict(),
+            data=radio_program_in.model_dump(exclude_none=True),
             files=create_temp_file(),
         )
 
@@ -454,7 +476,7 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram should raise 500 if S3PersistenceError."""
         # Given
         updated_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**updated_program.dict())
+        radio_program_in = RadioProgramUpdateInSchema(**updated_program.model_dump())
         radio_programs_mock.update.side_effect = S3PersistenceError(
             "Unsuccessful S3 put_object response. Status: test error"
         )
@@ -462,7 +484,7 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         # When
         response = self.client.put(
             f"/programs/{updated_program.id}",
-            data=radio_program_in.dict(),
+            data=radio_program_in.model_dump(exclude_none=True),
             files=create_temp_file(),
         )
 
@@ -483,14 +505,15 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram should raise 500 if DynamoDbClientError."""
         # Given
         updated_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**updated_program.dict())
+        radio_program_in = RadioProgramUpdateInSchema(**updated_program.model_dump())
         radio_programs_mock.update.side_effect = DynamoDbClientError(
             "Failed to store new item in DynamoDB: test error"
         )
 
         # When
         response = self.client.put(
-            f"/programs/{updated_program.id}", data=radio_program_in.dict()
+            f"/programs/{updated_program.id}",
+            data=radio_program_in.model_dump(exclude_none=True),
         )
 
         # Then
@@ -510,14 +533,15 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram should raise 500 if DynamoDbStatusError."""
         # Given
         updated_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**updated_program.dict())
+        radio_program_in = RadioProgramUpdateInSchema(**updated_program.model_dump())
         radio_programs_mock.update.side_effect = DynamoDbStatusError(
             "Failed to store new item in DynamoDB: test error"
         )
 
         # When
         response = self.client.put(
-            f"/programs/{updated_program.id}", data=radio_program_in.dict()
+            f"/programs/{updated_program.id}",
+            data=radio_program_in.model_dump(exclude_none=True),
         )
 
         # Then
