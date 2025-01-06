@@ -2,6 +2,7 @@
 import unittest
 
 import pytest
+from slugify import slugify
 from starlette import status
 from starlette.testclient import TestClient
 
@@ -51,8 +52,8 @@ class TestRadioPrograms(unittest.TestCase):
     def test_get_program(self):
         """Get a program by id."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         get_program = self.radio_programs.create(
@@ -91,8 +92,8 @@ class TestRadioPrograms(unittest.TestCase):
     def test_get_all_programs_returns_existing_programs(self):
         """List programs returns all existing programs."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         new_radio_program_file = self.new_upload_file
@@ -127,8 +128,8 @@ class TestRadioPrograms(unittest.TestCase):
     def test_create_a_program(self):
         """Create a new Radio Program."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
 
         # When
@@ -146,14 +147,14 @@ class TestRadioPrograms(unittest.TestCase):
     def test_update_a_program(self):
         """Update an existing Radio Program."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         created_radio_program = self.radio_programs.create(
             radio_program=radio_program_in, program_file=radio_program_file.file
         )
-        update_program = RadioProgramUpdateInSchema(title="Updated_title")
+        update_program = RadioProgramUpdateInSchema(title="Updated title")
 
         # When
         response = self.client.put(
@@ -165,7 +166,7 @@ class TestRadioPrograms(unittest.TestCase):
 
         # Then
         assert update_program.title == received.title
-        assert update_program.title in received.radio_program.file_name
+        assert slugify(update_program.title) in received.radio_program.file_name
 
     def test_update_non_existing_program_raises_404(self):
         """Update a non existing Radio Program raises 404."""
@@ -184,8 +185,8 @@ class TestRadioPrograms(unittest.TestCase):
     def test_delete_radio_program(self):
         """Delete an existing Radio Program."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         created_radio_program = self.radio_programs.create(
