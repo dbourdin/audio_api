@@ -14,7 +14,6 @@ from audio_api.api.schemas import (
     RadioProgramUpdateInSchema,
     RadioProgramUpdateOutSchema,
 )
-from audio_api.api.schemas.utils import as_form
 from audio_api.aws.dynamodb.exceptions import (
     DynamoDbClientError,
     DynamoDbItemNotFoundError,
@@ -106,7 +105,7 @@ def get_all() -> Any:
 async def create(
     *,
     program_in: RadioProgramCreateInSchema = Depends(
-        as_form(RadioProgramCreateInSchema)
+        RadioProgramCreateInSchema.as_form
     ),
     program_file: UploadFile = File(...),
 ) -> Any:
@@ -161,9 +160,9 @@ async def update(
     *,
     program_id: uuid.UUID,
     program_in: RadioProgramUpdateInSchema = Depends(
-        as_form(RadioProgramUpdateInSchema)
+        RadioProgramUpdateInSchema.as_form
     ),
-    program_file: UploadFile = File(None),
+    program_file: UploadFile | None = File(None),
 ) -> Any:
     """Update an existing RadioProgram.
 
