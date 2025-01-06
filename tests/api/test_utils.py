@@ -26,9 +26,7 @@ def radio_program(title: str) -> RadioProgramModel:
 
 def create_temp_file() -> dict:
     """Return a dict containing a SpooledTemporaryFile prepared for form-data."""
-    return {
-        "program_file": ("program_file", SpooledTemporaryFile(), "multipart/form-data")
-    }
+    return {"program_file": ("program_file", SpooledTemporaryFile(), "audio/mpeg")}
 
 
 @dataclass
