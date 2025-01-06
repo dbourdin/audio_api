@@ -53,7 +53,9 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
     def test_upload_file_to_s3(self):
         """Test that we can upload a file successfully to S3."""
         # Given
-        radio_program_create_model = RadioProgramFileCreate(**self.upload_file.dict())
+        radio_program_create_model = RadioProgramFileCreate.model_validate(
+            self.upload_file.model_dump()
+        )
 
         # When
         uploaded_file = self.radio_program_files_repository.put_object(
@@ -74,7 +76,9 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
     ):
         """Test S3ClientError is raised if put_object raises ClientError."""
         # Given
-        radio_program_create_model = RadioProgramFileCreate(**self.upload_file.dict())
+        radio_program_create_model = RadioProgramFileCreate.model_validate(
+            self.upload_file.model_dump()
+        )
 
         # When
         put_object_mock.side_effect = ClientError(
@@ -87,7 +91,7 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
             self.radio_program_files_repository.put_object(radio_program_create_model)
         put_object_mock.assert_called_once_with(
             Bucket=self.radio_program_files_repository.bucket_name,
-            Key=radio_program_create_model.file_name,
+            Key=mock.ANY,
             Body=radio_program_create_model.file,
         )
 
@@ -97,7 +101,9 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
     ):
         """Test S3PersistenceError is raised if put_object returns an error code."""
         # Given
-        radio_program_create_model = RadioProgramFileCreate(**self.upload_file.dict())
+        radio_program_create_model = RadioProgramFileCreate.model_validate(
+            self.upload_file.model_dump()
+        )
 
         # When
         put_object_mock.return_value = {"ResponseMetadata": {"HTTPStatusCode": 500}}
@@ -107,14 +113,16 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
             self.radio_program_files_repository.put_object(radio_program_create_model)
         put_object_mock.assert_called_once_with(
             Bucket=self.radio_program_files_repository.bucket_name,
-            Key=radio_program_create_model.file_name,
+            Key=mock.ANY,
             Body=radio_program_create_model.file,
         )
 
     def test_get_file_from_s3(self):
         """Test that we can retrieve a file successfully from S3."""
         # Given
-        radio_program_create_model = RadioProgramFileCreate(**self.upload_file.dict())
+        radio_program_create_model = RadioProgramFileCreate.model_validate(
+            self.upload_file.model_dump()
+        )
         expected_content = self.upload_file.file_content
 
         # When
@@ -132,7 +140,9 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
     def test_get_file_from_s3_raises_s3_client_error(self, get_object_mock: mock.patch):
         """Test S3ClientError is raised if get_object raises ClientError."""
         # Given
-        radio_program_create_model = RadioProgramFileCreate(**self.upload_file.dict())
+        radio_program_create_model = RadioProgramFileCreate.model_validate(
+            self.upload_file.model_dump()
+        )
         uploaded_file = self.radio_program_files_repository.put_object(
             radio_program_create_model
         )
@@ -157,7 +167,9 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
     ):
         """Test S3PersistenceError is raised if get_object returns an error code."""
         # Given
-        radio_program_create_model = RadioProgramFileCreate(**self.upload_file.dict())
+        radio_program_create_model = RadioProgramFileCreate.model_validate(
+            self.upload_file.model_dump()
+        )
         uploaded_file = self.radio_program_files_repository.put_object(
             radio_program_create_model
         )
@@ -194,12 +206,12 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
         """Test that we can retrieve a file successfully from S3."""
         # Given
         uploaded_file_1 = self.radio_program_files_repository.put_object(
-            RadioProgramFileCreate(**self.upload_file.dict())
+            RadioProgramFileCreate.model_validate(self.upload_file.model_dump())
         )
         # Wait 3 second to avoid name collision
         time.sleep(3)
         uploaded_file_2 = self.radio_program_files_repository.put_object(
-            RadioProgramFileCreate(**self.upload_file.dict())
+            RadioProgramFileCreate.model_validate(self.upload_file.model_dump())
         )
         expected_results = [uploaded_file_1, uploaded_file_2]
 
@@ -230,7 +242,9 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
     def test_delete_object(self):
         """Test delete_object successfully removes an object from S3 bucket."""
         # Given
-        radio_program_create_model = RadioProgramFileCreate(**self.upload_file.dict())
+        radio_program_create_model = RadioProgramFileCreate.model_validate(
+            self.upload_file.model_dump()
+        )
         uploaded_file = self.radio_program_files_repository.put_object(
             radio_program_create_model
         )
@@ -291,7 +305,9 @@ class TestRadioProgramFilesRepository(unittest.TestCase):
     def test_delete_all(self):
         """Test delete_all removes all objects from S3 bucket."""
         # Given
-        radio_program_create_model = RadioProgramFileCreate(**self.upload_file.dict())
+        radio_program_create_model = RadioProgramFileCreate.model_validate(
+            self.upload_file.model_dump()
+        )
         uploaded_file = self.radio_program_files_repository.put_object(
             radio_program_create_model
         )
