@@ -16,7 +16,7 @@ from audio_api.aws.s3.repositories import radio_program_files_repository
 from audio_api.aws.s3.repositories.radio_program_files import (
     RadioProgramFilesRepository,
 )
-from audio_api.domain.models import RadioProgramModel
+from audio_api.domain.models import RadioProgramFileModel, RadioProgramModel
 
 
 class RadioPrograms:
@@ -86,8 +86,10 @@ class RadioPrograms:
         uploaded_file = cls.radio_program_files_repository.put_object(
             RadioProgramFileCreate(file_name=radio_program.title, file=program_file)
         )
+        # TODO: Add parsing for program_length?
+        radio_program_file = RadioProgramFileModel(**uploaded_file.model_dump())
         radio_program_db = RadioProgramPutItemModel(
-            **radio_program.dict(), radio_program=uploaded_file
+            **radio_program.model_dump(), radio_program=radio_program_file
         )
         try:
             new_program = cls.radio_programs_repository.put_item(item=radio_program_db)
@@ -124,8 +126,10 @@ class RadioPrograms:
         if db_program.radio_program:
             existing_file = db_program.radio_program.file_name
 
-        update_program = RadioProgramUpdateItemModel(**db_program.dict())
-        update_program = update_program.copy(update=new_program.dict(exclude_none=True))
+        update_program = RadioProgramUpdateItemModel(**db_program.model_dump())
+        update_program = update_program.model_copy(
+            update=new_program.model_dump(exclude_none=True)
+        )
 
         if program_file:
             # Will throw RadioProgramS3Error if fails to persist program.
