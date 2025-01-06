@@ -87,7 +87,9 @@ class RadioPrograms:
             RadioProgramFileCreate(file_name=radio_program.title, file=program_file)
         )
         # TODO: Add parsing for program_length?
-        radio_program_file = RadioProgramFileModel(**uploaded_file.model_dump())
+        radio_program_file = RadioProgramFileModel.model_validate(
+            uploaded_file.model_dump()
+        )
         radio_program_db = RadioProgramPutItemModel(
             **radio_program.model_dump(), radio_program=radio_program_file
         )
