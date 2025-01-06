@@ -128,7 +128,9 @@ class RadioPrograms:
         if db_program.radio_program:
             existing_file = db_program.radio_program.file_name
 
-        update_program = RadioProgramUpdateItemModel(**db_program.model_dump())
+        update_program = RadioProgramUpdateItemModel.model_validate(
+            db_program.model_dump()
+        )
         update_program = update_program.model_copy(
             update=new_program.model_dump(exclude_none=True)
         )

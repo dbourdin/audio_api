@@ -64,8 +64,8 @@ def radio_program_files_repository(request) -> RadioProgramFilesRepository:
 @pytest.fixture(scope="class")
 def create_program_model(request) -> RadioProgramPutItemModel:
     """Return an RadioProgramPutItemModel instance."""
-    put_item_model = RadioProgramPutItemModel(
-        **radio_program(title="test program").model_dump()
+    put_item_model = RadioProgramPutItemModel.model_validate(
+        radio_program(title="test program").model_dump()
     )
     request.cls.create_program_model = put_item_model
     return put_item_model

@@ -140,7 +140,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         if not result_query:
             raise DynamoDbItemNotFoundError(f"Item {item_id} does not exist.")
 
-        return self.model(**result_query[0])
+        return self.model.model_validate(result_query[0])
 
     def get_items(self) -> list[ModelType]:
         """Get all DynamoDB items in the table.
@@ -164,7 +164,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                 f"Unsuccessful table.scan response. Status: {status}"
             )
 
-        return [self.model(**item) for item in response.get("Items", [])]
+        return [self.model.model_validate(item) for item in response.get("Items", [])]
 
     def put_item(self, item: PutItemModelType) -> ModelType:
         """Create a new item to DynamoDB table.
@@ -196,7 +196,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             )
 
         logger.info(f"Successfully put_item {item_id} on {self.table_name} table.")
-        return self.model(**item_dict)
+        return self.model.model_validate(item_dict)
 
     def update_item(self, item_id: UUID, item: UpdateItemModelType) -> ModelType:
         """Update an existing item in DynamoDB table.
@@ -237,7 +237,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
             )
 
         logger.info(f"Successfully update_item {item_id} on {self.table_name} table.")
-        return self.model(**response["Attributes"])
+        return self.model.model_validate(response["Attributes"])
 
     def delete_item(self, item_id: UUID) -> None:
         """Delete an item from the DynamoDB table based on the provided id.
