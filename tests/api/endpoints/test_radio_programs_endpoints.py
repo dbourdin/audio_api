@@ -181,7 +181,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create a RadioProgram via POST."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            created_program.model_dump()
+        )
         radio_programs_mock.create.return_value = created_program
         expected = RadioProgramCreateOutSchema.model_validate(
             created_program.model_dump()
@@ -207,7 +209,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create a RadioProgram via POST."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            created_program.model_dump()
+        )
 
         # When
         response = self.client.post("/programs", data=radio_program_in.model_dump())
@@ -239,7 +243,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create RadioProgram should raise 500 if S3ClientError."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            created_program.model_dump()
+        )
         radio_programs_mock.create.side_effect = S3ClientError(
             "Failed to get response from S3: test error"
         )
@@ -266,7 +272,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create RadioProgram should raise 500 if S3PersistenceError."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            created_program.model_dump()
+        )
         radio_programs_mock.create.side_effect = S3PersistenceError(
             "Unsuccessful S3 put_object response. Status: test error"
         )
@@ -293,7 +301,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create RadioProgram should raise 500 if DynamoDbClientError."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            created_program.model_dump()
+        )
         radio_programs_mock.create.side_effect = DynamoDbClientError(
             "Failed to store new item in DynamoDB: test error"
         )
@@ -320,7 +330,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Create RadioProgram should raise 500 if DynamoDbStatusError."""
         # Given
         created_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramCreateInSchema(**created_program.model_dump())
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            created_program.model_dump()
+        )
         radio_programs_mock.create.side_effect = DynamoDbStatusError(
             "Failed to store new item in DynamoDB: test error"
         )
@@ -346,7 +358,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         # Given
         updated_program = radio_program(title="test_program_update")
         radio_programs_mock.update.return_value = updated_program
-        data_to_send = RadioProgramUpdateInSchema(**updated_program.model_dump())
+        data_to_send = RadioProgramUpdateInSchema.model_validate(
+            updated_program.model_dump()
+        )
         expected = RadioProgramUpdateOutSchema.model_validate(
             updated_program.model_dump()
         )
@@ -374,7 +388,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         # Given
         updated_program = radio_program(title="test_program_update")
         radio_programs_mock.update.return_value = updated_program
-        data_to_send = RadioProgramUpdateInSchema(**updated_program.model_dump())
+        data_to_send = RadioProgramUpdateInSchema.model_validate(
+            updated_program.model_dump()
+        )
         expected = RadioProgramUpdateOutSchema.model_validate(
             updated_program.model_dump()
         )
@@ -425,7 +441,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram raises 404 if program is not found."""
         # Given
         updated_program = radio_program(title="test_program_update")
-        data_to_send = RadioProgramUpdateInSchema(**updated_program.model_dump())
+        data_to_send = RadioProgramUpdateInSchema.model_validate(
+            updated_program.model_dump()
+        )
         radio_programs_mock.update.side_effect = DynamoDbItemNotFoundError(
             f"RadioProgram with id {updated_program.id} does not exist."
         )
@@ -447,7 +465,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram should raise 500 if S3ClientError."""
         # Given
         updated_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramUpdateInSchema(**updated_program.model_dump())
+        radio_program_in = RadioProgramUpdateInSchema.model_validate(
+            updated_program.model_dump()
+        )
         radio_programs_mock.update.side_effect = S3ClientError(
             "Failed to get response from S3: test error"
         )
@@ -476,7 +496,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram should raise 500 if S3PersistenceError."""
         # Given
         updated_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramUpdateInSchema(**updated_program.model_dump())
+        radio_program_in = RadioProgramUpdateInSchema.model_validate(
+            updated_program.model_dump()
+        )
         radio_programs_mock.update.side_effect = S3PersistenceError(
             "Unsuccessful S3 put_object response. Status: test error"
         )
@@ -505,7 +527,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram should raise 500 if DynamoDbClientError."""
         # Given
         updated_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramUpdateInSchema(**updated_program.model_dump())
+        radio_program_in = RadioProgramUpdateInSchema.model_validate(
+            updated_program.model_dump()
+        )
         radio_programs_mock.update.side_effect = DynamoDbClientError(
             "Failed to store new item in DynamoDB: test error"
         )
@@ -533,7 +557,9 @@ class TestRadioProgramsEndpoints(unittest.TestCase):
         """Update RadioProgram should raise 500 if DynamoDbStatusError."""
         # Given
         updated_program = radio_program(title="Test program post")
-        radio_program_in = RadioProgramUpdateInSchema(**updated_program.model_dump())
+        radio_program_in = RadioProgramUpdateInSchema.model_validate(
+            updated_program.model_dump()
+        )
         radio_programs_mock.update.side_effect = DynamoDbStatusError(
             "Failed to store new item in DynamoDB: test error"
         )

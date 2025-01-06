@@ -87,7 +87,9 @@ class RadioPrograms:
             RadioProgramFileCreate(file_name=radio_program.title, file=program_file)
         )
         # TODO: Add parsing for program_length?
-        radio_program_file = RadioProgramFileModel(**uploaded_file.model_dump())
+        radio_program_file = RadioProgramFileModel.model_validate(
+            uploaded_file.model_dump()
+        )
         radio_program_db = RadioProgramPutItemModel(
             **radio_program.model_dump(), radio_program=radio_program_file
         )
@@ -126,7 +128,9 @@ class RadioPrograms:
         if db_program.radio_program:
             existing_file = db_program.radio_program.file_name
 
-        update_program = RadioProgramUpdateItemModel(**db_program.model_dump())
+        update_program = RadioProgramUpdateItemModel.model_validate(
+            db_program.model_dump()
+        )
         update_program = update_program.model_copy(
             update=new_program.model_dump(exclude_none=True)
         )

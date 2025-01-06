@@ -63,7 +63,7 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
             return f"{endpoint_url}/{self.bucket_name}/{object_key}"
         return f"https://{self.bucket_name}.s3.amazonaws.com/{object_key}"
 
-    def put_object(self, item: CreateModelType) -> type[ModelType]:
+    def put_object(self, item: CreateModelType) -> ModelType:
         """Put an object to the S3 bucket.
 
         Args:
@@ -78,32 +78,31 @@ class BaseS3Repository(Generic[ModelType, CreateModelType]):
         """
         current_time = datetime.now()
         timestamp = current_time.strftime("%Y-%m-%d_%H-%M-%S")
-        # TODO: Make filename url friendly.
-        item.file_name = f"{timestamp}_{item.file_name}.mp3"
+        file_name = f"{timestamp}_{item.file_name}.mp3"
         try:
             response = self.s3_client.put_object(
-                Bucket=self.bucket_name, Key=item.file_name, Body=item.file
+                Bucket=self.bucket_name, Key=file_name, Body=item.file
             )
         except ClientError as e:
             logger.error(
-                f"Failed to put_object {item.file_name} in {self.bucket_name} bucket."
+                f"Failed to put_object {file_name} in {self.bucket_name} bucket."
             )
             raise S3ClientError(f"Failed to get response from S3: {e}")
 
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status != 200:
             logger.error(
-                f"Failed to put_object {item.file_name} in {self.bucket_name} bucket."
+                f"Failed to put_object {file_name} in {self.bucket_name} bucket."
             )
             raise S3PersistenceError(
                 f"Unsuccessful S3 put_object response. Status: {status}"
             )
 
         logger.info(
-            f"Successfully put_object {item.file_name} in {self.bucket_name} bucket."
+            f"Successfully put_object {file_name} in {self.bucket_name} bucket."
         )
         return self.model(
-            file_name=item.file_name, file_url=self._build_object_url(item.file_name)
+            file_name=file_name, file_url=self._build_object_url(file_name)
         )
 
     def get_object(self, object_key: str) -> StreamingBody:

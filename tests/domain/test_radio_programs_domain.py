@@ -4,6 +4,7 @@ import unittest
 from unittest import mock
 
 import pytest
+from slugify import slugify
 
 from audio_api.api.schemas import RadioProgramCreateInSchema, RadioProgramUpdateInSchema
 from audio_api.aws.dynamodb.exceptions import (
@@ -67,8 +68,8 @@ class TestRadioProgramsDomain(unittest.TestCase):
     def test_create_radio_program(self):
         """Should create a new RadioProgram."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
 
@@ -93,8 +94,8 @@ class TestRadioProgramsDomain(unittest.TestCase):
     ):
         """Should raise DynamoDbClientError if fails to store object in DynamoDB."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
 
@@ -144,8 +145,8 @@ class TestRadioProgramsDomain(unittest.TestCase):
     def test_update_existing_radio_program(self):
         """Should update an existing RadioProgram."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         created_radio_program = self.radio_programs.create(
@@ -165,15 +166,15 @@ class TestRadioProgramsDomain(unittest.TestCase):
     def test_update_existing_radio_program_file(self):
         """Should update an existing RadioProgram with a new radio_program_file."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         new_radio_program_file = self.new_upload_file
         created_radio_program = self.radio_programs.create(
             radio_program=radio_program_in, program_file=radio_program_file.file
         )
-        update_program = RadioProgramUpdateInSchema(title="Updated_title")
+        update_program = RadioProgramUpdateInSchema(title="Updated title")
 
         # When
         updated_program = self.radio_programs.update(
@@ -186,7 +187,7 @@ class TestRadioProgramsDomain(unittest.TestCase):
         )
 
         # Then
-        assert update_program.title in updated_program.radio_program.file_name
+        assert slugify(update_program.title) in updated_program.radio_program.file_name
         assert uploaded_object.read() == new_radio_program_file.file_content
         with pytest.raises(S3FileNotFoundError):
             self.radio_program_files_repository.get_object(
@@ -241,8 +242,8 @@ class TestRadioProgramsDomain(unittest.TestCase):
     def test_delete_radio_program(self):
         """Should delete an existing radio program."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         db_radio_program = self.radio_programs.create(
@@ -266,8 +267,8 @@ class TestRadioProgramsDomain(unittest.TestCase):
     ):
         """Should delete an existing radio program even if fails to delete from S3."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         db_radio_program = self.radio_programs.create(
@@ -292,8 +293,8 @@ class TestRadioProgramsDomain(unittest.TestCase):
     ):
         """Should delete an existing radio program even if fails to delete from S3."""
         # Given
-        radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.model_dump()
+        radio_program_in = RadioProgramCreateInSchema.model_validate(
+            self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         db_radio_program = self.radio_programs.create(

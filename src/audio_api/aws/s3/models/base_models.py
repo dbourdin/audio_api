@@ -3,6 +3,7 @@ from tempfile import SpooledTemporaryFile
 from typing import Any
 
 from pydantic import BaseModel, field_validator
+from slugify import slugify
 
 
 class S3BaseModel(BaseModel):
@@ -21,6 +22,11 @@ class S3CreateModel(S3BaseModel):
     """S3CreateModel class."""
 
     file: Any
+
+    @field_validator("file_name", mode="before")
+    def slugify_file_name(cls, value):
+        """Slugify file_name to be URL friendly."""
+        return slugify(value)
 
     @field_validator("file")
     def validate_file(cls, value):

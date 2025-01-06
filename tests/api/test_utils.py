@@ -1,12 +1,12 @@
 """Test util functions."""
 import uuid
-from dataclasses import asdict, dataclass
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
-from typing import BinaryIO
+from typing import Any
 
 from starlette.datastructures import Headers, UploadFile
 
+from audio_api.aws.s3.models import S3BaseModel
 from audio_api.domain.models import RadioProgramFileModel, RadioProgramModel
 
 MAX_FILE_SIZE = 1024 * 1024
@@ -29,15 +29,11 @@ def create_temp_file() -> dict:
     return {"program_file": ("program_file", SpooledTemporaryFile(), "audio/mpeg")}
 
 
-@dataclass
-class UploadFileModel:
-    """UploadFileModel dataclass."""
+class UploadFileModel(S3BaseModel):
+    """UploadFileModel class."""
 
-    file_name: str
     file_content: bytes
-    file: BinaryIO
-
-    dict = asdict
+    file: Any
 
 
 def create_upload_file(
