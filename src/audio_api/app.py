@@ -11,7 +11,7 @@ settings = get_settings()
 
 app = FastAPI(
     title="Audio API",
-    description="Audio API built with FastAPI, PostgreSQL and S3 integration",
+    description="Audio API built with FastAPI, DynamoDB and S3 integration",
     version=settings.API_VERSION,
     debug=settings.ENVIRONMENT == EnvironmentEnum.development,
     root_path=settings.ROOT_PATH,

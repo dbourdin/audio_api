@@ -52,17 +52,17 @@ class TestRadioPrograms(unittest.TestCase):
         """Get a program by id."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         get_program = self.radio_programs.create(
             radio_program=radio_program_in, program_file=radio_program_file.file
         )
-        expected = RadioProgramGetSchema.from_orm(get_program)
+        expected = RadioProgramGetSchema.model_validate(get_program.model_dump())
 
         # When
         response = self.client.get(f"/programs/{expected.id}")
-        received = RadioProgramGetSchema.parse_obj(response.json())
+        received = RadioProgramGetSchema.model_validate(response.json())
 
         # Then
         assert response.status_code == status.HTTP_200_OK, response.text
@@ -92,7 +92,7 @@ class TestRadioPrograms(unittest.TestCase):
         """List programs returns all existing programs."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         new_radio_program_file = self.new_upload_file
@@ -104,8 +104,8 @@ class TestRadioPrograms(unittest.TestCase):
         )
         expected = sorted(
             [
-                RadioProgramListSchema.from_orm(program_1),
-                RadioProgramListSchema.from_orm(program_2),
+                RadioProgramListSchema.model_validate(program_1.model_dump()),
+                RadioProgramListSchema.model_validate(program_2.model_dump()),
             ],
             key=lambda x: x.id,
         )
@@ -113,7 +113,10 @@ class TestRadioPrograms(unittest.TestCase):
         # When
         response = self.client.get("/programs")
         received = sorted(
-            [RadioProgramListSchema.parse_obj(program) for program in response.json()],
+            [
+                RadioProgramListSchema.model_validate(program)
+                for program in response.json()
+            ],
             key=lambda x: x.id,
         )
 
@@ -125,14 +128,16 @@ class TestRadioPrograms(unittest.TestCase):
         """Create a new Radio Program."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
 
         # When
         response = self.client.post(
-            "/programs", data=radio_program_in.dict(), files=create_temp_file()
+            "/programs",
+            data=radio_program_in.model_dump(exclude_none=True),
+            files=create_temp_file(),
         )
-        received = RadioProgramCreateOutSchema.parse_raw(response.text)
+        received = RadioProgramCreateOutSchema.model_validate(response.json())
 
         # Then
         assert response.status_code == status.HTTP_201_CREATED, response.text
@@ -142,7 +147,7 @@ class TestRadioPrograms(unittest.TestCase):
         """Update an existing Radio Program."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         created_radio_program = self.radio_programs.create(
@@ -153,10 +158,10 @@ class TestRadioPrograms(unittest.TestCase):
         # When
         response = self.client.put(
             f"/programs/{created_radio_program.id}",
-            data=update_program.dict(),
+            data=update_program.model_dump(exclude_none=True),
             files=create_temp_file(),
         )
-        received = RadioProgramCreateOutSchema.parse_raw(response.text)
+        received = RadioProgramCreateOutSchema.model_validate(response.json())
 
         # Then
         assert update_program.title == received.title
@@ -169,7 +174,8 @@ class TestRadioPrograms(unittest.TestCase):
 
         # When
         response = self.client.put(
-            f"/programs/{put_program.id}", data=put_program.dict()
+            f"/programs/{put_program.id}",
+            data=put_program.model_dump(exclude_none=True),
         )
 
         # Then
@@ -179,7 +185,7 @@ class TestRadioPrograms(unittest.TestCase):
         """Delete an existing Radio Program."""
         # Given
         radio_program_in = RadioProgramCreateInSchema(
-            **self.create_program_model.dict()
+            **self.create_program_model.model_dump()
         )
         radio_program_file = self.upload_file
         created_radio_program = self.radio_programs.create(

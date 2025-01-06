@@ -6,12 +6,13 @@ authors = ["Damian Bourdin <damian.bourdin@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-boto3 = "^1.28.63"
-botocore = "^1.31.63"
-click = "^8.1.7"
-fastapi = "^0.104.0"
-fastapi-utils = "^0.2.1"
-python-multipart = "^0.0.19"
+boto3 = "^1.35.92"
+botocore = "^1.35.92"
+click = "^8.1.8"
+fastapi = "^0.115.6"
+fastapi-utils = {extras = ["all"], version = "^0.8.0"}
+python-multipart = "^0.0.20"
+pydantic-settings = "^2.7.1"
 
 [tool.poetry.group.dev.dependencies]
 typer = "^0.9.0"

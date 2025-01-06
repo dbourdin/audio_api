@@ -81,7 +81,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
                     return {k: _parse_value(v) for k, v in val.items() if v}
                 return val
 
-            return _parse_value(serialize(item.dict(exclude_none=True)))
+            return _parse_value(serialize(item.model_dump(exclude_none=True)))
 
         update_item_dict = _build_update_item_dict(update_item)
         attributes = {
@@ -179,7 +179,7 @@ class BaseDynamoDbRepository(Generic[ModelType, PutItemModelType, UpdateItemMode
         Returns:
             ModelType: Retrieved item from DynamoDB.
         """
-        item_dict = item.dict()
+        item_dict = item.model_dump()
         item_id = str(uuid4())
         item_dict["id"] = item_id
 

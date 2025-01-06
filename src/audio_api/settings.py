@@ -2,7 +2,7 @@
 
 from enum import Enum
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 from audio_api.version import __version__
 
